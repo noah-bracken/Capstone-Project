@@ -1,0 +1,53 @@
+/* css/styles.css */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+header {
+    background-color: #003366; /* Kent State's dark blue */
+    color: white;
+    padding: 1rem;
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+}
+
+h2 {
+    color: #003366; /* Kent State's dark blue */
+    margin: 0.5rem 0;
+}
+
+div {
+    margin: 1rem auto;
+    padding: 1rem;
+    width: 80%;
+    max-width: 600px;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+p.text {
+    margin: 0.5rem 0;
+}
+
+button.button {
+    background-color: #ffcc00; /* Kent State's gold */
+    color: #003366; /* Kent State's dark blue */
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0.5rem 0;
+    font-weight: bold;
+}
+
+button.button:hover {
+    background-color: #e6b800; /* A slightly darker gold */
+}
