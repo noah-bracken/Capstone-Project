@@ -21,16 +21,20 @@ h1 {
 h2 {
     color: #003366; /* Kent State's dark blue */
     margin: 0.5rem 0;
+    text-align: left;
+
 }
 
 div {
     margin: 1rem auto;
     padding: 1rem;
-    width: 80%;
+    width: 90%;/* Increased width to take up more of the page */
     max-width: 600px;
     background-color: white;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
+    text-align: left;
+
 }
 
 p.text {
@@ -46,6 +50,8 @@ button.button {
     cursor: pointer;
     margin: 0.5rem 0;
     font-weight: bold;
+    text-align: left;
+
 }
 
 button.button:hover {
