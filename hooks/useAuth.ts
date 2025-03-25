@@ -6,7 +6,8 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('authToken'); // Clear token
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('role');
       router.replace('/login'); // Redirect to login screen
     } catch (error) {
       console.error(' Error logging out:', error);

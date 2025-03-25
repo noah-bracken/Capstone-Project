@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import styles from '../components/styles';
 
+const API_URL = 'https://capstone-db-lb2e.onrender.com';
+
 // Define the structure of class data
 interface ClassData {
   class_name: string;
@@ -19,7 +21,7 @@ export default function ClassScreen() {
   useEffect(() => {
     const fetchClassData = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/classes/${id}`);
+        const response = await fetch(`${API_URL}/classes/${id}`);
         const data = await response.json();
         setClassData(data);
       } catch (error) {

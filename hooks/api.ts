@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ClassType } from '../app/types'; // Import the type
 
-const API_URL = 'http://localhost:5000/classes';
+const API_URL = 'https://capstone-db-lb2e.onrender.com';
 
 // Function to retrieve stored JWT token
 const getToken = async () => {
   try {
-    return await AsyncStorage.getItem('authToken');
+    return await AsyncStorage.getItem('token');
   } catch (error) {
     console.error(' Error retrieving token:', error);
     return null;
@@ -17,16 +17,16 @@ const getToken = async () => {
 // Modify `addClass` to include the JWT token in headers
 export const addClass = async (className: string, description: string, meetingTimes: any[], color: string, teacherId: number) => {
   try {
-    const token = await AsyncStorage.getItem('authToken');
+    const token = await AsyncStorage.getItem('token');
 
     if (!token) {
       console.error(' No token found, authentication failed');
       return null;
     }
 
-    console.log("📡 Sending request with token:", token);
+    console.log("Sending request with token:", token);
 
-    const response = await fetch('http://localhost:5000/classes', {
+    const response = await fetch(`${API_URL}/classes`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ export const addClass = async (className: string, description: string, meetingTi
 
     if (!response.ok) {
       const errorMessage = await response.text();
-      console.error(` Server Error (${response.status}):`, errorMessage);
+      console.error(`Server Error (${response.status}):`, errorMessage);
       return null;
     }
 
@@ -64,9 +64,9 @@ export const deleteClass = async (class_id: number) => {
       return null;
     }
 
-    console.log(`🛠 Sending DELETE request to: ${API_URL}/${class_id}`);
+    console.log(`Sending DELETE request to: ${API_URL}/${class_id}`);
 
-    const response = await fetch(`${API_URL}/${class_id}`, {
+    const response = await fetch(`${API_URL}/classes/${class_id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }, // Include token
     });
@@ -98,7 +98,7 @@ export const useFetchClasses = () => {
           console.error(' No token found, authentication failed');
           return;
         }
-
+        console.log("Token being sent:", token);
         const response = await fetch(API_URL, {
           headers: { 'Authorization': `Bearer ${token}` },
         });

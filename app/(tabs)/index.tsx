@@ -18,6 +18,7 @@ export default function HomeScreen() {
       } else {
         setIsAuthenticated(true);
       }
+      refreshClasses();
     };
 
     checkAuth();

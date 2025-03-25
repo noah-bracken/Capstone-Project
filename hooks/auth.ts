@@ -1,12 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'https://capstone-db-lb2e.onrender.com';
+const router = useRouter();
 
 // Store Token
 export const storeToken = async (token: string) => {
   try {
-    await AsyncStorage.setItem('authToken', token);
-    console.log("🔑 Token stored successfully");
+    await AsyncStorage.setItem('token', token);
+    console.log("Token stored successfully");
   } catch (error) {
     console.error(' Error storing token:', error);
   }
@@ -15,8 +17,8 @@ export const storeToken = async (token: string) => {
 // Retrieve Token
 export const getToken = async () => {
   try {
-    const token = await AsyncStorage.getItem('authToken');
-    console.log("🔍 Retrieved Token:", token);
+    const token = await AsyncStorage.getItem('token');
+    console.log("Retrieved Token:", token);
     return token;
   } catch (error) {
     console.error(' Error retrieving token:', error);
@@ -26,6 +28,8 @@ export const getToken = async () => {
 
 // Login Function
 export const login = async (email: string, password: string) => {
+  await AsyncStorage.removeItem('token');
+  await AsyncStorage.removeItem('role');
   try {
     const response = await fetch(`${API_URL}/login`, {
       method: 'POST',
@@ -35,14 +39,19 @@ export const login = async (email: string, password: string) => {
 
     const data = await response.json();
 
-    if (response.ok) {
-      await storeToken(data.token); // Store JWT Token
+    if (response.ok && data.token) {
+      await AsyncStorage.multiSet([
+        ['token', data.token],
+        ['role', data.role]
+      ]);
+
+      console.log("Token & Role Stored:", data.token, data.role);
       return data;
     } else {
       throw new Error(data.error || 'Login failed');
     }
   } catch (error) {
-    console.error(' Login error:', error);
+    console.error('Login error:', error);
     return null;
   }
 };
@@ -51,7 +60,7 @@ export const login = async (email: string, password: string) => {
 export const logout = async (router: any) => {
   try {
     await AsyncStorage.removeItem('authToken'); // Remove JWT Token
-    console.log("🚪 Logged out successfully");
+    console.log("Logged out successfully");
     router.push('/login'); // Navigate to login page
   } catch (error) {
     console.error(' Error logging out:', error);

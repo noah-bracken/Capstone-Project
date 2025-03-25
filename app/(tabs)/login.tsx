@@ -10,13 +10,16 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
+    console.log("Attempting to login...");
+  
     const result = await login(email, password);
-    if (result) {
-      Alert.alert('Login Successful', `Welcome back!`);
-      router.push('/'); 
-    } else {
+    
+    if (!result) {
       Alert.alert('Error', 'Invalid email or password');
+      return;
     }
+    Alert.alert('Login Successful', 'Welcome back!');
+    router.push('/');  // Ensure router navigation is executed
   };
 
   return (

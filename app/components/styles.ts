@@ -277,6 +277,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
+
+  joinClassContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 15,
+    gap: 10,
+  },
+  
+  joinClassButton: {
+    backgroundColor: '#3B82F6', // Sky blue
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
 });
 
 export default styles;
