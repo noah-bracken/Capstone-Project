@@ -349,7 +349,12 @@ const styles = StyleSheet.create({
     color: '#333',
     fontSize: 12,
     marginTop: 5,
-  }
+  },
+  text: {
+    fontSize: 16,
+    color: '#334155',
+    padding: 8,
+  },
 });
 
 export default styles;

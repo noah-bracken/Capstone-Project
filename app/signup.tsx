@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Platform, Alert as RNAlert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { registerUser } from '../hooks/auth';
 import styles from './components/styles';
+
+// Cross-platform alert utility
+const showAlert = (title: string, message: string) => {
+  if (Platform.OS === 'web') {
+    window.alert(`${title}: ${message}`);
+  } else {
+    RNAlert.alert(title, message);
+  }
+};
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -10,16 +19,16 @@ export default function SignupScreen() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('student');
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
 
   const handleSignup = async () => {
     const result = await registerUser(firstName, lastName, email, password, role);
 
     if (result) {
-      Alert.alert('Success', 'Account created successfully! Please log in.');
+      showAlert('Success', 'Account created successfully! Please log in.');
       router.push('/login');
     } else {
-      Alert.alert('Error', 'Signup failed. Try again.');
+      showAlert('Error', 'Signup failed. Try again.');
     }
   };
 

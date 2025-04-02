@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Platform, Alert as RNAlert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { login } from '../hooks/auth';
 import styles from './components/styles';
+
+// Cross-platform alert utility
+const showAlert = (title: string, message: string) => {
+  if (Platform.OS === 'web') {
+    window.alert(`${title}: ${message}`);
+  } else {
+    RNAlert.alert(title, message);
+  }
+};
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -15,10 +24,11 @@ export default function LoginScreen() {
     const result = await login(email, password);
 
     if (!result) {
-      Alert.alert('Error', 'Invalid email or password');
+      showAlert('Error', 'Invalid email or password');
       return;
     }
-    Alert.alert('Login Successful', 'Welcome back!');
+
+    showAlert('Login Successful', 'Welcome back!');
     router.push('/');
   };
 

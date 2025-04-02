@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import styles from './components/styles';
 import { createClass } from '../hooks/api';
 import { useClassContext } from './context/ClassContext';
+import TimePickerModal from './components/TimePickerModal';
 
-const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+// Cross-platform alert
+const showAlert = (title: string, message: string) => {
+  if (Platform.OS === 'web') {
+    window.alert(`${title}\n\n${message}`);
+  } else {
+    Alert.alert(title, message);
+  }
+};
 
 export default function AddClassScreen() {
   const router = useRouter();
@@ -13,32 +21,48 @@ export default function AddClassScreen() {
   const [className, setClassName] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState('#4C1D95');
-  const [meetingTimes, setMeetingTimes] = useState([
-    { day: 'Monday', hour: '00', minute: '00' },
-  ]);
+  const [meetingTimes, setMeetingTimes] = useState<
+    { day: string; hour: string; minute: string }[]
+  >([]);
+  const [showModal, setShowModal] = useState(false);
 
-  const updateTime = (index: number, value: string, field: 'day' | 'hour' | 'minute') => {
-    const updatedTimes = [...meetingTimes];
-    updatedTimes[index][field] = value;
-    setMeetingTimes(updatedTimes);
-  };
+  const addMeetingTime = (day: string, hour: number, minute: number) => {
+    const formattedHour = hour.toString().padStart(2, '0');
+    const formattedMinute = minute.toString().padStart(2, '0');
 
-  const addMeetingTime = () => {
-    if (meetingTimes.length < 5) {
-      setMeetingTimes([...meetingTimes, { day: 'Monday', hour: '00', minute: '00' }]);
-    } else {
-      Alert.alert('Limit Reached', 'You can only add up to 5 meeting times.');
+    if (meetingTimes.length >= 5) {
+      console.log('Meeting limit reached');
+      showAlert('Limit Reached', 'You can only add up to 5 meeting times.');
+      return;
     }
+
+    const exists = meetingTimes.some(
+      (t) => t.day === day && t.hour === formattedHour && t.minute === formattedMinute
+    );
+
+    if (exists) {
+      console.log('Duplicate meeting time');
+      showAlert('Duplicate Time', 'This meeting time already exists.');
+      return;
+    }
+
+    setMeetingTimes(prev => [
+      ...prev,
+      { day, hour: formattedHour, minute: formattedMinute },
+    ]);
   };
 
   const removeMeetingTime = (index: number) => {
-    const updated = meetingTimes.filter((_, i) => i !== index);
-    setMeetingTimes(updated);
+    setMeetingTimes(meetingTimes.filter((_, i) => i !== index));
   };
 
   const handleCreateClass = async () => {
     if (!className.trim()) {
-      Alert.alert('Error', 'Class name is required.');
+      showAlert('Error', 'Class name is required.');
+      return;
+    }
+    if (meetingTimes.length === 0) {
+      showAlert('Error', 'At least one meeting time is required.');
       return;
     }
 
@@ -52,20 +76,24 @@ export default function AddClassScreen() {
 
       const result = await createClass(payload);
       if (result?.message) {
-        Alert.alert('Success', 'Class created!');
+        showAlert('Success', 'Class created!');
         await refreshClasses();
         router.replace('/');
       } else {
-        Alert.alert('Error', 'Failed to create class.');
+        showAlert('Error', 'Failed to create class.');
       }
     } catch (err: any) {
       console.error('Create class error:', err);
-      Alert.alert('Error', err.message || 'Something went wrong.');
+      showAlert('Error', err.message || 'Something went wrong.');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <TouchableOpacity style={styles.homeButton} onPress={() => router.push('/')}>
+        <Text style={styles.buttonText}>↩ Home Page</Text>
+      </TouchableOpacity>
+
       <Text style={styles.title}>Add New Class</Text>
 
       <TextInput
@@ -85,44 +113,43 @@ export default function AddClassScreen() {
       />
 
       <Text style={styles.sectionTitle}>Meeting Times</Text>
-      {meetingTimes.map((time, index) => (
-        <View key={index} style={styles.timeRow}>
-          <TextInput
-            style={[styles.input, { flex: 1 }]}
-            placeholder="Day"
-            value={time.day}
-            onChangeText={(value) => updateTime(index, value, 'day')}
-          />
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            maxLength={2}
-            placeholder="HH"
-            value={time.hour}
-            onChangeText={(value) => updateTime(index, value, 'hour')}
-          />
-          <Text style={styles.colon}>:</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            maxLength={2}
-            placeholder="MM"
-            value={time.minute}
-            onChangeText={(value) => updateTime(index, value, 'minute')}
-          />
-          <TouchableOpacity onPress={() => removeMeetingTime(index)}>
-            <Text style={styles.buttonText}>🗑</Text>
-          </TouchableOpacity>
-        </View>
-      ))}
 
-      <TouchableOpacity style={styles.addClassButton} onPress={addMeetingTime}>
+      {meetingTimes.length > 0 && (
+        <View style={{ marginBottom: 12 }}>
+          {meetingTimes.map((time, index) => (
+            <View key={index} style={styles.timeRow}>
+              <Text style={[styles.text, { flex: 1 }]}>
+                {(() => {
+                  const hour = parseInt(time.hour);
+                  const ampm = hour >= 12 ? 'PM' : 'AM';
+                  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+                  return `${time.day} - ${displayHour}:${time.minute} ${ampm}`;
+                })()}
+              </Text>
+              <TouchableOpacity onPress={() => removeMeetingTime(index)}>
+                <Text style={styles.buttonText}>🗑</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <TouchableOpacity style={styles.addClassButton} onPress={() => setShowModal(true)}>
         <Text style={styles.buttonText}>+ Add Meeting Time</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.addClassButton} onPress={handleCreateClass}>
         <Text style={styles.addClassText}>Create Class</Text>
       </TouchableOpacity>
+
+      <TimePickerModal
+        visible={showModal}
+        onCancel={() => setShowModal(false)}
+        onConfirm={(day, hour, minute) => {
+          addMeetingTime(day, hour, minute);
+          setShowModal(false);
+        }}
+      />
     </ScrollView>
   );
 }

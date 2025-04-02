@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import styles from './styles';
 
 interface AttendanceQRCodeProps {
-  classId: string | string[]; // from router params
+  classId: string | string[];
 }
 
 export default function AttendanceQRCode({ classId }: AttendanceQRCodeProps) {
