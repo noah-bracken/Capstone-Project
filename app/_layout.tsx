@@ -8,6 +8,8 @@ import { LogBox } from 'react-native';
 
 LogBox.ignoreLogs([
   'Warning: Do not call Hooks inside useEffect',
+  'Reminder check error: TypeError',
+  'Error fetching classes'
 ]);
 
 Splash.preventAutoHideAsync();

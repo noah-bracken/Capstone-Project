@@ -88,6 +88,84 @@ export const fetchMeetingTimes = async (classId: string) => {
     return [];
   }
 };
+//Fetch class settings
+export const fetchClassSettings = async (classId: string) => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) throw new Error('No token found');
+
+    const response = await fetch(`${API_URL}/classes/${classId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch class settings');
+    }
+
+    const classData = await response.json();
+    const timesResponse = await fetch(`${API_URL}/classes/${classId}/meeting-times`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!timesResponse.ok) {
+      throw new Error('Failed to fetch meeting times');
+    }
+
+    const meeting_times = await timesResponse.json();
+
+    return {
+      ...classData,
+      meeting_times,
+    };
+  } catch (error) {
+    console.error('fetchClassSettings error:', error);
+    throw error;
+  }
+};
+
+// Update class settings
+export const updateClass = async (
+  classId: string,
+  className: string,
+  description: string,
+  color: string,
+  meetingTimes: { day: string; hour: string; minute: string }[]
+) => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) throw new Error('No token found');
+
+    const response = await fetch(`${API_URL}/classes/${classId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        class_name: className,
+        description,
+        color,
+        meeting_times: meetingTimes,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error("Failed to update class:", error);
+      return null;
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    console.error("Update error:", err);
+    return null;
+  }
+};
 
 //Delete Class
 export const deleteClass = async (class_id: string) => {
@@ -119,7 +197,31 @@ export const deleteClass = async (class_id: string) => {
     return null;
   }
 };
+//Delete users
+export const deleteAccount = async () => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) throw new Error('Not authenticated');
 
+    const response = await fetch(`${API_URL}/delete-account`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to delete account');
+    }
+
+    return data;
+  } catch (err) {
+    console.error('deleteAccount error:', err);
+    throw err;
+  }
+};
 //Fetch All Classes
 export const useFetchClasses = () => {
   const [classes, setClasses] = useState<ClassType[]>([]);
@@ -217,3 +319,25 @@ export const joinClass = async (classCode: string) => {
     throw error;
   }
 };
+
+export const fetchStudentDetails = async (studentId: number) => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) throw new Error('No token found. Please log in.');
+
+    const response = await fetch(`${API_URL}/students/${studentId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch student details.');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching student details:', error);
+    throw error;
+  }
+};
+

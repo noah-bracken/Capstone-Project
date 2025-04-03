@@ -63,9 +63,37 @@ export default function ClassScreen() {
             <Text style={styles.sectionTitle}>Students:</Text>
             {classData.students.length > 0 ? (
               classData.students.map((student) => (
-                <Text key={student.user_id} style={styles.studentItem}>
-                  • {student.first_name} {student.last_name}
-                </Text>
+                <View key={student.user_id} style={styles.studentCard}>
+                  <TouchableOpacity
+                    style={{ flex: 1 }}
+                    onPress={() => router.push(`./studentDetails/${student.user_id}`)}
+                  >
+                    <Text style={styles.studentName}>
+                      {student.first_name} {student.last_name}
+                    </Text>
+                  </TouchableOpacity>
+              
+                  <View style={styles.attendanceButtons}>
+                    <TouchableOpacity
+                      style={[styles.attendanceButton, { backgroundColor: '#10B981' }]}
+                      onPress={() => console.log('Present', student.user_id)}
+                    >
+                      <Text style={styles.buttonText}>P</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.attendanceButton, { backgroundColor: '#FBBF24' }]}
+                      onPress={() => console.log('Late', student.user_id)}
+                    >
+                      <Text style={styles.buttonText}>L</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.attendanceButton, { backgroundColor: '#EF4444' }]}
+                      onPress={() => console.log('Absent', student.user_id)}
+                    >
+                      <Text style={styles.buttonText}>A</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               ))
             ) : (
               <Text style={styles.studentItem}>No students enrolled yet.</Text>

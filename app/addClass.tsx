@@ -56,6 +56,18 @@ export default function AddClassScreen() {
     setMeetingTimes(meetingTimes.filter((_, i) => i !== index));
   };
 
+  const isValidTime = (t: { hour: string, minute: string }) =>
+    !isNaN(Number(t.hour)) &&
+    !isNaN(Number(t.minute)) &&
+    t.hour !== '' &&
+    t.minute !== '';
+  
+  const invalidTime = meetingTimes.some(t => !isValidTime(t));
+  if (invalidTime) {
+    showAlert('Error', 'Please make sure all meeting times are valid.');
+    return;
+  }
+
   const handleCreateClass = async () => {
     if (!className.trim()) {
       showAlert('Error', 'Class name is required.');

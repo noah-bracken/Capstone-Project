@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const hours = [...Array(12).keys()].map(i => i + 1);
@@ -86,7 +86,11 @@ const styles = StyleSheet.create({
       alignItems: 'center',
     },
     modal: {
-      width: '50%',
+      width: Platform.select({
+        android: '95%',
+        web: '50%',
+        default: '50%',
+      }),
       height: 380,
       backgroundColor: 'white',
       borderRadius: 20,

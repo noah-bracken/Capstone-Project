@@ -355,6 +355,32 @@ const styles = StyleSheet.create({
     color: '#334155',
     padding: 8,
   },
+  studentCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E0E7FF',
+    padding: 12,
+    marginVertical: 6,
+    borderRadius: 12,
+  },
+  
+  studentName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1E3A8A',
+  },
+  
+  attendanceButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  
+  attendanceButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
 });
 
 export default styles;
