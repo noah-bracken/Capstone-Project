@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../../components/styles';
 import { ClassType } from '../../types';
 import AttendanceQRCode from '../../components/ClassQRCode';
-import ClassCodeModal from './[id]/classCode'; // 
+import ClassCodeModal from './[id]/classCode';
+import PrintQRCode from './[id]/PrintQRCode'; // ✅ Import your print component
 
 const API_URL = 'https://capstone-db-lb2e.onrender.com';
 
@@ -19,6 +20,7 @@ export default function ClassScreen() {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [classData, setClassData] = useState<ClassData | null>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchClassData = async () => {
@@ -30,13 +32,16 @@ export default function ClassScreen() {
         console.error('Error fetching class details:', error);
       }
     };
-    const getRole = async () => {
+
+    const getRoleAndToken = async () => {
       const storedRole = await AsyncStorage.getItem('role');
+      const token = await AsyncStorage.getItem('token');
       setRole(storedRole);
+      setSessionToken(token);
     };
 
     fetchClassData();
-    getRole();
+    getRoleAndToken();
   }, [id]);
 
   if (!classData || !role) {
@@ -53,12 +58,11 @@ export default function ClassScreen() {
       <TouchableOpacity style={styles.homeButton} onPress={() => router.push('/')}>
         <Text style={styles.buttonText}>↩ Home Page</Text>
       </TouchableOpacity>
-  
+
       <Text style={styles.classTitle}>{classData.class_name}</Text>
-  
+
       {role === 'teacher' ? (
         <>
-        
           <View style={styles.studentList}>
             <Text style={styles.sectionTitle}>Students:</Text>
             {classData.students.length > 0 ? (
@@ -72,7 +76,7 @@ export default function ClassScreen() {
                       {student.first_name} {student.last_name}
                     </Text>
                   </TouchableOpacity>
-              
+
                   <View style={styles.attendanceButtons}>
                     <TouchableOpacity
                       style={[styles.attendanceButton, { backgroundColor: '#10B981' }]}
@@ -99,19 +103,21 @@ export default function ClassScreen() {
               <Text style={styles.studentItem}>No students enrolled yet.</Text>
             )}
           </View>
-  
-          {/* QR Code Generation */}
+
+          {/* QR Code Generator */}
           <AttendanceQRCode classId={id} />
 
-          {/* Show Class Code Button */}
-          <TouchableOpacity
-            style={styles.homeButton}
-            onPress={() => setShowCodeModal(true)}
-          >
+          {/* 🖨️ Print QR Code */}
+          {Platform.OS === 'web' && sessionToken && (
+            <PrintQRCode classId={id as string} sessionToken={sessionToken} />
+          )}
+
+          {/* Show Class Code */}
+          <TouchableOpacity style={styles.homeButton} onPress={() => setShowCodeModal(true)}>
             <Text style={styles.buttonText}>Show Class Code</Text>
           </TouchableOpacity>
 
-          {/* Manage Settings */}
+          {/* ⚙️ Settings */}
           <TouchableOpacity
             style={styles.settingsButton}
             onPress={() => router.push(`/classDetails/${id}/settings`)}
@@ -119,17 +125,17 @@ export default function ClassScreen() {
             <Text style={styles.buttonText}>⚙️</Text>
           </TouchableOpacity>
 
-          {/* Class Code Modal */}
+          {/* Modal */}
           <ClassCodeModal
-          visible={showCodeModal}
-          classCode={classData.class_id}
-          onClose={() => setShowCodeModal(false)}
+            visible={showCodeModal}
+            classCode={classData.class_id}
+            onClose={() => setShowCodeModal(false)}
           />
         </>
       ) : (
         <>
           <Text style={styles.sectionTitle}>Student Options:</Text>
-  
+
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => router.push(`/classDetails/${id}/scanAttendance`)}
@@ -147,4 +153,4 @@ export default function ClassScreen() {
       )}
     </View>
   );
-}  
+}
