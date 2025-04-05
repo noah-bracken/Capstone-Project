@@ -6,12 +6,15 @@ import styles from '../../components/styles';
 import { ClassType } from '../../types';
 import AttendanceQRCode from '../../components/ClassQRCode';
 import ClassCodeModal from './[id]/classCode';
-import PrintQRCode from './[id]/PrintQRCode'; // ✅ Import your print component
+import PrintQRCode from './[id]/PrintQRCode';
 
 const API_URL = 'https://capstone-db-lb2e.onrender.com';
 
 interface ClassData extends ClassType {
   students: { user_id: number; first_name: string; last_name: string }[];
+  teacher_name?: string;
+  meeting_times?: { day: string; time: string }[];
+
 }
 
 export default function ClassScreen() {
@@ -60,7 +63,21 @@ export default function ClassScreen() {
       </TouchableOpacity>
 
       <Text style={styles.classTitle}>{classData.class_name}</Text>
-
+      {role === 'student' && classData.teacher_name && (
+        <Text style={styles.subtitle}>
+          Taught by {classData.teacher_name}
+        </Text>
+      )}
+      {classData.meeting_times && classData.meeting_times.length > 0 && (
+      <View style={styles.meetingTimesBox}>
+        <Text style={styles.sectionTitle}>Meeting Times:</Text>
+        {classData.meeting_times.map((mt, index) => (
+          <Text key={index} style={styles.meetingTimeText}>
+            • {mt.day} at {mt.time}
+          </Text>
+        ))}
+      </View>
+    )}
       {role === 'teacher' ? (
         <>
           <View style={styles.studentList}>

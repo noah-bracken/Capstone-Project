@@ -381,6 +381,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 8,
   },
+  subtitle: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 8,
+  },
+  teacherText: {
+    fontSize: 16,
+    color: '#555',
+    fontStyle: 'italic',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  
+  meetingTimesBox: {
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 10,
+  },
+  
+  meetingTimeText: {
+    fontSize: 15,
+    color: '#333',
+    marginLeft: 5,
+  },
+    
 });
 
 export default styles;

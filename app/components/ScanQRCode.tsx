@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   Pressable,
   StyleSheet,
   Image,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import {
   CameraView,
@@ -14,13 +16,13 @@ import {
 } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
+import { validateSessionToken } from '../../hooks/api';
 
-
-export default function ScanQRCode() {
+export default function ScanQRCodeScreen() {
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [scanMessage, setScanMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,30 +30,40 @@ export default function ScanQRCode() {
       requestPermission();
     }
   }, []);
-  
+
   useFocusEffect(
     useCallback(() => {
-      // Reset scan state on every screen focus
       setScanned(false);
       setScanMessage(null);
+      setLoading(false);
     }, [])
   );
 
-  const handleBarcodeScanned = (scanningResult: BarcodeScanningResult) => {
-    if (scanned) return;
-
+  const handleBarcodeScanned = async (scanningResult: BarcodeScanningResult) => {
+    if (scanned || loading) return;
     const { data } = scanningResult;
     setScanned(true);
+    setLoading(true);
 
     try {
       const parsed = JSON.parse(data);
-      const time = new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-      setScanMessage(`Attendance marked at ${time}`);
-    } catch {
-      setScanMessage('Invalid QR code');
+      const { class_id, session_token } = parsed;
+
+      const isValid = await validateSessionToken(class_id, session_token);
+      if (isValid) {
+        const time = new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        setScanMessage(`Attendance marked at ${time}`);
+      } else {
+        setScanMessage('Invalid or expired QR code');
+      }
+    } catch (err) {
+      console.error('Scan failed:', err);
+      setScanMessage('Error: Invalid QR code format');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,25 +92,31 @@ export default function ScanQRCode() {
         onBarcodeScanned={handleBarcodeScanned}
       />
 
-      {/* QR Scan Frame Overlay */}
+      {/* Overlay frame */}
       <Image
         source={require('./qrimage.png')}
         style={styles.overlay}
         resizeMode="contain"
       />
 
-      {/* Toast-style message */}
+      {/* Toast */}
       {scanMessage && (
         <View style={styles.toast}>
           <Text style={styles.toastText}>{scanMessage}</Text>
         </View>
       )}
 
+      {/* Loading Spinner */}
+      {loading && (
+        <ActivityIndicator
+          size="large"
+          color="#4C1D95"
+          style={{ position: 'absolute', top: '10%', alignSelf: 'center' }}
+        />
+      )}
+
       {/* Tap anywhere to go back */}
-      <Pressable
-        style={StyleSheet.absoluteFillObject}
-        onPress={() => router.back()}
-      />
+      <Pressable style={StyleSheet.absoluteFillObject} onPress={() => router.back()} />
     </View>
   );
 }

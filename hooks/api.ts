@@ -82,7 +82,7 @@ export const fetchMeetingTimes = async (classId: string) => {
     }
 
     const data = await response.json();
-    return data; // returns [{ day: 'Monday', time: '14:30' }, ...]
+    return data;
   } catch (error) {
     console.error('Error fetching meeting times:', error);
     return [];
@@ -341,3 +341,23 @@ export const fetchStudentDetails = async (studentId: number) => {
   }
 };
 
+// Store qr session token in DB
+export async function storeSessionToken(classId: string, token: string, timestamp: number) {
+  const response = await fetch(`${API_URL}/classes/${classId}/session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_token: token, timestamp }),
+  });
+  return await response.json();
+}
+
+// Validate token
+export async function validateSessionToken(classId: string, token: string) {
+  const response = await fetch(`${API_URL}/classes/${classId}/validate-session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_token: token }),
+  });
+  const data = await response.json();
+  return data.valid;
+}
