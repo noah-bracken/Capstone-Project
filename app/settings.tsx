@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  Modal,
+  Alert,
+  Platform,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import styles from './components/styles';
 import { useAuth } from '../hooks/useAuth';
-import { deleteAccount } from './../hooks/api';
+import { deleteAccount, deleteDeviceId } from './../hooks/api';
+import * as SecureStore from 'expo-secure-store';
+import * as Device from 'expo-device';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -13,9 +23,28 @@ export default function SettingsScreen() {
 
   const handleDeleteAccount = async () => {
     try {
-      const response = await deleteAccount(); // Calls your API
+      let deviceId: string | null = null;
+  
+      // Only try to access SecureStore if on a mobile platform
+      if (Platform.OS !== 'web') {
+        deviceId = await SecureStore.getItemAsync('device_id');
+      }
+  
+      const response = await deleteAccount(); // Deletes user from DB
+  
       if (response?.message) {
         Alert.alert('Account Deleted', response.message);
+  
+        if (Platform.OS !== 'web' && deviceId) {
+          try {
+            await deleteDeviceId(); // API call
+            await SecureStore.deleteItemAsync('device_id'); // Clean up storage
+            console.log('Device lock removed');
+          } catch (deviceErr) {
+            console.error('Failed to delete device:', deviceErr);
+          }
+        }
+  
         logout(); // Logs out after deletion
       } else {
         Alert.alert('Error', 'Unable to delete account.');
@@ -54,7 +83,10 @@ export default function SettingsScreen() {
             />
 
             <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}
+              >
                 <Text style={styles.buttonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity

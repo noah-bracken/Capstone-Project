@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Image,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import {
   CameraView,
@@ -16,7 +15,9 @@ import {
 } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { validateSessionToken } from '../../hooks/api';
+import { validateSessionToken, verifyDevice, getCurrentUserId } from '../../hooks/api';
+import * as Device from 'expo-device';
+import * as SecureStore from 'expo-secure-store';
 
 export default function ScanQRCodeScreen() {
   const router = useRouter();
@@ -41,14 +42,34 @@ export default function ScanQRCodeScreen() {
 
   const handleBarcodeScanned = async (scanningResult: BarcodeScanningResult) => {
     if (scanned || loading) return;
-    const { data } = scanningResult;
+  
     setScanned(true);
     setLoading(true);
-
+  
     try {
+      if (Platform.OS !== 'web') {
+        const storedId = await SecureStore.getItemAsync('device_id');
+        const currentId = Device.osInternalBuildId;
+  
+        if (!storedId || storedId !== currentId) {
+          setScanMessage("Unauthorized device.");
+          return;
+        }
+  
+        try {
+          const userId = await getCurrentUserId();
+          await verifyDevice(userId, currentId); // server check
+        } catch (err) {
+          console.error('Server device check failed:', err);
+          setScanMessage("Unauthorized device (server check)");
+          return;
+        }
+      }
+  
+      const { data } = scanningResult;
       const parsed = JSON.parse(data);
       const { class_id, session_token } = parsed;
-
+  
       const isValid = await validateSessionToken(class_id, session_token);
       if (isValid) {
         const time = new Date().toLocaleTimeString([], {
@@ -59,6 +80,7 @@ export default function ScanQRCodeScreen() {
       } else {
         setScanMessage('Invalid or expired QR code');
       }
+  
     } catch (err) {
       console.error('Scan failed:', err);
       setScanMessage('Error: Invalid QR code format');

@@ -3,6 +3,9 @@ import { View, Text, TextInput, TouchableOpacity, Platform, Alert as RNAlert } f
 import { useRouter } from 'expo-router';
 import { registerUser } from '../hooks/auth';
 import styles from './components/styles';
+import * as Device from 'expo-device';
+import * as SecureStore from 'expo-secure-store';
+import { storeDeviceId } from '../hooks/api';
 
 // Cross-platform alert utility
 const showAlert = (title: string, message: string) => {
@@ -23,13 +26,31 @@ export default function SignupScreen() {
 
   const handleSignup = async () => {
     const result = await registerUser(firstName, lastName, email, password, role);
-
-    if (result) {
-      showAlert('Success', 'Account created successfully! Please log in.');
-      router.push('/login');
-    } else {
+  
+    if (!result) {
       showAlert('Error', 'Signup failed. Try again.');
+      return;
     }
+  
+    showAlert('Success', 'Account created successfully! Please log in.');
+  
+    if (Platform.OS !== 'web') {
+      const currentId = Device.osInternalBuildId;
+  
+      if (currentId) {
+        try {
+          await SecureStore.setItemAsync('device_id', currentId);
+          await storeDeviceId(result.user_id, currentId);
+        } catch (err) {
+          console.error('Failed to register device after signup:', err);
+          showAlert('Warning', 'Account created, but device could not be registered.');
+        }
+      } else {
+        showAlert('Warning', 'Account created, but device ID was not found.');
+      }
+    }
+  
+    router.push('/login');
   };
 
   return (

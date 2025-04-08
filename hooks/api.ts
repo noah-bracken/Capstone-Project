@@ -361,3 +361,72 @@ export async function validateSessionToken(classId: string, token: string) {
   const data = await response.json();
   return data.valid;
 }
+//register new device
+export async function storeDeviceId(userId: number, deviceId: string) {
+  const response = await fetch(`${API_URL}/bind-device`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ user_id: userId, device_id: deviceId }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to bind device');
+  }
+
+  return await response.json();
+}
+
+//validate device on login
+export async function validateDevice(userId: number, deviceId: string) {
+  const response = await fetch(`${API_URL}/device/validate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, deviceId }),
+  });
+
+  const result = await response.json();
+  return result.valid;
+}
+
+export async function deleteDeviceId() {
+  const token = await AsyncStorage.getItem('token');
+  const response = await fetch(`${API_URL}/devices`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.ok;
+}
+
+export async function verifyDevice(userId: number, deviceId: string) {
+  const response = await fetch(`${API_URL}/verify-device`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId, device_id: deviceId }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Unauthorized device (server check)');
+  }
+
+  return await response.json();
+}
+
+export async function getCurrentUserId() {
+  const token = await AsyncStorage.getItem('token');
+  const response = await fetch(`${API_URL}/me`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error('Failed to fetch user ID');
+
+  const data = await response.json();
+  return data.user_id;
+}
