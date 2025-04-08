@@ -3,10 +3,14 @@ import React from 'react';
 
 export default function TabLayout() {
   return (
+<<<<<<< HEAD
     <Tabs screenOptions={{ 
         headerShown: false,
         tabBarStyle: { display: 'none' }
       }}>
+=======
+    <Tabs screenOptions={{ headerShown: false }}>
+>>>>>>> main
       {/* Home Tab */}
       <Tabs.Screen
         name="index"

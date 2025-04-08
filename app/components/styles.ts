@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
+<<<<<<< HEAD
   container: {
     flex: 1,
     backgroundColor: '#FAFAFA',
@@ -11,11 +12,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     color: '#4C1D95',
+=======
+  // ======= General Styles =======
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+>>>>>>> main
   },
   classTitle: {
     fontSize: 22,
     marginTop: 20,
     fontWeight: 'bold',
+<<<<<<< HEAD
     color: '#A855F7',
   },
   buttonText: {
@@ -24,10 +38,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
+=======
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+
+  // ======= Header Styles =======
+>>>>>>> main
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+<<<<<<< HEAD
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#4C1D95',
@@ -81,6 +106,55 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
+=======
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  companyName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  welcome: {
+    fontSize: 18,
+  },
+
+  // ======= Buttons =======
+  settingsButton: {
+    backgroundColor: '#28a745',
+    padding: 10,
+    marginTop: 10,
+    borderRadius: 5,
+  },
+  settingsIcon: {
+    fontSize: 20,
+  },
+  homeButton: {
+    backgroundColor: '#ff5733',
+    padding: 10,
+    marginTop: 10,
+    borderRadius: 5,
+  },
+  toggleButton: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    marginTop: 10,
+    borderRadius: 5,
+  },
+  saveButton: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  addButtonText: {
+    fontSize: 16,
+    color: '#fff',
+  },
+
+  // ======= Class List Styles =======
+>>>>>>> main
   classes: {
     marginTop: 20,
   },
@@ -92,6 +166,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
+<<<<<<< HEAD
     color: '#4C1D95',
   },
   classButton: {
@@ -110,10 +185,25 @@ const styles = StyleSheet.create({
     color: '#4C1D95',
     fontWeight: '600',
     padding: 12,
+=======
+  },
+  classButton: {
+    backgroundColor: '#f8f8f8',
+    padding: 15,
+    marginTop: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  classButtonText: {
+    fontSize: 18,
+>>>>>>> main
   },
   studentList: {
     marginTop: 10,
     padding: 10,
+<<<<<<< HEAD
     backgroundColor: '#E5E7EB',
     borderRadius: 8,
   },
@@ -131,12 +221,31 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#FFFFFF',
     color: '#1E293B',
+=======
+    backgroundColor: '#f8f8f8',
+    borderRadius: 5,
+  },
+  studentItem: {
+    fontSize: 16,
+    paddingVertical: 2,
+  },
+
+  // ======= Add Class Form =======
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 10,
+    borderRadius: 5,
+    fontSize: 18,
+    marginBottom: 10,
+>>>>>>> main
   },
   textArea: {
     height: 80,
     textAlignVertical: 'top',
   },
   addClassButton: {
+<<<<<<< HEAD
     backgroundColor: '#A855F7',
     borderRadius: 20,
     padding: 14,
@@ -148,6 +257,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
+=======
+    backgroundColor: '#007bff',
+    borderRadius: 20,
+    padding: 10,
+  },
+  addClassText: {
+    fontSize: 20,
+    color: '#fff',
+  },
+
+  // ======= Meeting Time Picker =======
+>>>>>>> main
   section: {
     marginVertical: 15,
   },
@@ -157,6 +278,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   timeInput: {
+<<<<<<< HEAD
     width: 60,
     borderWidth: 1,
     textAlign: 'center',
@@ -165,10 +287,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
     color: '#1E293B',
+=======
+    width: 50,
+    borderWidth: 1,
+    textAlign: 'center',
+    fontSize: 18,
+>>>>>>> main
   },
   colon: {
     fontSize: 18,
     marginHorizontal: 5,
+<<<<<<< HEAD
     color: '#A855F7',
   },
   saveButton: {
@@ -182,12 +311,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
   },
+=======
+  },
+  picker: {
+    width: 150,
+    marginRight: 10,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 5,
+  },
+
+  // ======= Class Color Picker =======
+  colorContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  colorBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 5,
+  },
+
+  // ======= Settings Styles =======
+>>>>>>> main
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
+<<<<<<< HEAD
     borderBottomColor: '#A855F7',
   },
   settingLabel: {
@@ -422,6 +574,20 @@ const styles = StyleSheet.create({
   greetingText: {
     fontSize: 20,
     fontWeight: '600',
+=======
+    borderBottomColor: '#ddd',
+  },
+  settingLabel: {
+    fontSize: 18,
+  },
+
+  // ======= Attendance Styles =======
+  attendanceItem: {
+    backgroundColor: '#f4f4f4',
+    padding: 15,
+    marginVertical: 10,
+    borderRadius: 10,
+>>>>>>> main
   },
 });
 

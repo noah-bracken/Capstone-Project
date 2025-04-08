@@ -48,6 +48,7 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+<<<<<<< HEAD
 
 Enhance the class setting screen to be able to change class name, description
 and meeting times. Add more information in the class page to display the next meeting time.
@@ -56,3 +57,5 @@ about them/their attendance. Allow users to update their first and last names as
 their account. Add feature to allow QR code to be printed. Add a checker to make sure a QR
 code is scanned while it is being displayed (or within 15 minutes of class start for printed out).
 Adjust styles as necessary. Add to final report.
+=======
+>>>>>>> main

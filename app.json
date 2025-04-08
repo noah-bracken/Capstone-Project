@@ -1,5 +1,6 @@
 {
   "expo": {
+<<<<<<< HEAD
     "name": "NOMark",
     "slug": "NOMark",
     "version": "11.6.0",
@@ -20,25 +21,47 @@
       "supportsTablet": true
     },
 
+=======
+    "name": "myApp",
+    "slug": "myApp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+>>>>>>> main
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+<<<<<<< HEAD
       },
       "package": "com.anonymous.myApp"
     },
 
+=======
+      }
+    },
+>>>>>>> main
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+<<<<<<< HEAD
 
+=======
+>>>>>>> main
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
+<<<<<<< HEAD
           "image": "./assets/logo.png",
           "resizeMode": "contain",
           "backgroundColor": "#000000"
@@ -48,6 +71,16 @@
       "expo-secure-store"
     ],
 
+=======
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      "expo-secure-store"
+    ],
+>>>>>>> main
     "experiments": {
       "typedRoutes": true
     }
