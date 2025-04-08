@@ -62,6 +62,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
     borderRadius: 5,
   },
+  saveButton: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  addButtonText: {
+    fontSize: 16,
+    color: '#fff',
+  },
 
   // ======= Class List Styles =======
   classes: {
@@ -141,17 +152,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginHorizontal: 5,
   },
-  saveButton: {
-    backgroundColor: '#007bff',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  addButtonText: {
-    fontSize: 16,
-    color: '#fff',
-  },
   picker: {
     width: 150,
     marginRight: 10,
@@ -181,6 +181,14 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: 18,
+  },
+
+  // ======= Attendance Styles =======
+  attendanceItem: {
+    backgroundColor: '#f4f4f4',
+    padding: 15,
+    marginVertical: 10,
+    borderRadius: 10,
   },
 });
 
