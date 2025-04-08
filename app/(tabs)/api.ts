@@ -1,3 +1,5 @@
+import { getToken } from '../hooks/auth'; // adjust path if needed
+
 const API_URL = 'https://capstone-db-lb2e.onrender.com';
 
 export const getAttendanceForClass = async (classId: number) => {
