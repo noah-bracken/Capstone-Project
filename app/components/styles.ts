@@ -406,7 +406,23 @@ const styles = StyleSheet.create({
     color: '#333',
     marginLeft: 5,
   },
-    
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+    marginTop: 5,
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    resizeMode: 'contain',
+    marginRight: 10,
+  },
+  
+  greetingText: {
+    fontSize: 20,
+    fontWeight: '600',
+  },
 });
 
 export default styles;

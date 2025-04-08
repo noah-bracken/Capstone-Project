@@ -6,6 +6,7 @@ import styles from './components/styles';
 import * as Device from 'expo-device';
 import * as SecureStore from 'expo-secure-store';
 import { storeDeviceId } from '../hooks/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const showAlert = (title: string, message: string) => {
   if (Platform.OS === 'web') {
@@ -30,7 +31,14 @@ export default function LoginScreen() {
       return;
     }
   
-    const { token, role, user_id } = result;
+    const { token, role, user_id, first_name } = result;
+
+    console.log('✅ Got login result:', result);
+
+    if (first_name) {
+      await AsyncStorage.setItem('firstName', first_name);
+      console.log('✅ Stored first name:', first_name);
+    }
     console.log("Token & Role Stored:", token, role);
   
     showAlert('Login Successful', 'Welcome back!');

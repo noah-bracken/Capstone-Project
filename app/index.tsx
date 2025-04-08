@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,23 +27,26 @@ export default function HomeScreen() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const { reminder, clearReminder, goToAction } = useClassReminders(role);
 
+  const [firstName, setFirstName] = useState('');
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         await SplashScreen.preventAutoHideAsync();
-
+  
         const token = await getToken();
         const storedRole = await AsyncStorage.getItem('role');
-
+        const storedFirstName = await AsyncStorage.getItem('firstName');
+  
         if (!token) {
           router.replace('/login');
         } else {
           setIsAuthenticated(true);
           setRole(storedRole);
+          if (storedFirstName) setFirstName(storedFirstName);
           await refreshClasses();
         }
-
+  
         setLoading(false);
       } catch (err) {
         console.error("Error in auth check:", err);
@@ -51,7 +55,7 @@ export default function HomeScreen() {
         await SplashScreen.hideAsync();
       }
     };
-
+  
     checkAuth();
   }, []);
 
@@ -65,7 +69,10 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>NOMark</Text>
+      <View style={styles.headerContainer}>
+        <Image source={require('../assets/images/logo.png')} style={styles.logo} />
+        <Text style={styles.sectionTitle}>Welcome back, {firstName || 'User'}!</Text>
+      </View>
 
       <TouchableOpacity
         style={styles.settingsButton}
