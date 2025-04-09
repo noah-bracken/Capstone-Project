@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import styles from '../../../components/styles';
+import styles from '../../../../components/capstone/styles';
 
 const API_URL = 'https://capstone-db-lb2e.onrender.com';
 

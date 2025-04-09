@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Animated, TouchableOpacity, View, Text } from 'react-native';
-import styles from './styles';
+import styles from '../../components/capstone/styles';
 import { useRouter } from 'expo-router';
 
 export default function AnimatedClassCard({ cls }: { cls: any }) {

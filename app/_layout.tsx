@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Platform } from 'react-native';
 import * as Splash from 'expo-splash-screen';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { ClassProvider } from './context/ClassContext';
+import { ClassProvider } from '../context/ClassContext';
 import { Stack } from 'expo-router';
 import { LogBox } from 'react-native';
 

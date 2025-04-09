@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import styles from './components/styles';
+import styles from '../components/capstone/styles';
 import { createClass } from '../hooks/api';
-import { useClassContext } from './context/ClassContext';
-import TimePickerModal from './components/TimePickerModal';
+import { useClassContext } from '../context/ClassContext';
+import TimePickerModal from '../components/capstone/TimePickerModal';
 
 // Cross-platform alert
 const showAlert = (title: string, message: string) => {

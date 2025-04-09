@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Platform, Alert as RNAlert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { login } from '../hooks/auth';
-import styles from './components/styles';
+import styles from '../components/capstone/styles';
 import * as Device from 'expo-device';
 import * as SecureStore from 'expo-secure-store';
 import { storeDeviceId } from '../hooks/api';

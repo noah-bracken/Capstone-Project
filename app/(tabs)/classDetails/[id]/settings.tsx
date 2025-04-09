@@ -8,11 +8,11 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import styles from '../../../components/styles';
-import TimePickerModal from '../../../components/TimePickerModal';
-import { useClassContext } from '../../../context/ClassContext';
+import styles from '../../../../components/capstone/styles';
+import TimePickerModal from '../../../../components/capstone/TimePickerModal';
+import { useClassContext } from '../../../../context/ClassContext';
 import { fetchClassSettings, updateClass, deleteClass } from '../../../../hooks/api';
-import ConfirmModal from '../../../components/confirm';
+import ConfirmModal from '../../../../components/capstone/confirm';
 
 export default function ClassSettingsScreen() {
   const router = useRouter();
@@ -96,7 +96,7 @@ export default function ClassSettingsScreen() {
       if (result?.message) {
         Alert.alert('Success', 'Class updated successfully.');
         await refreshClasses();
-        router.replace(`/classDetails/${id}`);
+        router.replace(`/(tabs)/classDetails/${id}`);
       } else {
         Alert.alert('Error', 'Failed to update class.');
       }

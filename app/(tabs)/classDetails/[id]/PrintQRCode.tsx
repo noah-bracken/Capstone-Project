@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, Platform, View } from 'react-native';
 import * as Print from 'expo-print';
 import QRCode from 'qrcode';
-import styles from '../../../components/styles'
+import styles from '../../../../components/capstone/styles'
 
 interface Props {
   classId: string;

@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import styles from './components/styles';
+import styles from '../components/capstone/styles';
 import { useAuth } from '../hooks/useAuth';
 import { deleteAccount, deleteDeviceId } from './../hooks/api';
 import * as SecureStore from 'expo-secure-store';

@@ -10,12 +10,12 @@ import {
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
-import { useClassContext } from './context/ClassContext';
+import { useClassContext } from '../context/ClassContext';
 import { getToken } from '../hooks/auth';
-import styles from './components/styles';
-import JoinModal from './components/joinClass';
-import AnimatedClassCard from './components/AnimatedButton';
-import ReminderBanner from './components/ReminderBanner';
+import styles from '../components/capstone/styles';
+import JoinModal from '../components/capstone/joinClass';
+import AnimatedClassCard from '../components/capstone/AnimatedButton';
+import ReminderBanner from '../components/capstone/ReminderBanner';
 import { useClassReminders } from '../hooks/useClassReminders';
 
 export default function HomeScreen() {

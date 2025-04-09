@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
-import styles from '../../../components/styles';
+import styles from '../../../../components/capstone/styles';
 
 type ClassCodeModalProps = {
   visible: boolean;

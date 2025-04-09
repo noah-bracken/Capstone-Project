@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import styles from '../../components/styles';
+import styles from '../../../components/capstone/styles';
 import { ClassType } from '../../types';
-import AttendanceQRCode from '../../components/ClassQRCode';
+import AttendanceQRCode from '../../../components/capstone/ClassQRCode';
 import ClassCodeModal from './[id]/classCode';
 import PrintQRCode from './[id]/PrintQRCode';
 
