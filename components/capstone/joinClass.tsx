@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, Text, TouchableOpacity, Modal, Platform, Alert as RNAlert } from 'react-native';
-import { useClassContext } from '../../app/context/ClassContext';
+import { useClassContext } from '../../context/ClassContext';
 import styles from './styles';
 import { joinClass } from '../../hooks/api';
 
