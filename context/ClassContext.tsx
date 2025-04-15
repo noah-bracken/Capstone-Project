@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ClassType } from '../types'; // Import the type
+import { ClassType } from '../components/capstone/types'; // Import the type
 const API_URL = 'https://capstone-db-lb2e.onrender.com/classes'; // Update if deployed
 // Define context type
 type ClassContextType = {

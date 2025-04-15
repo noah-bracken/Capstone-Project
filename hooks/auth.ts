@@ -1,8 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
 
 const API_URL = 'https://capstone-db-lb2e.onrender.com';
-const router = useRouter();
 
 // Store Token
 export const storeToken = async (token: string) => {
@@ -10,7 +8,7 @@ export const storeToken = async (token: string) => {
     await AsyncStorage.setItem('token', token);
     console.log("Token stored successfully");
   } catch (error) {
-    console.error(' Error storing token:', error);
+    console.error('Error storing token:', error);
   }
 };
 
@@ -21,7 +19,7 @@ export const getToken = async () => {
     console.log("Retrieved Token:", token);
     return token;
   } catch (error) {
-    console.error(' Error retrieving token:', error);
+    console.error('Error retrieving token:', error);
     return null;
   }
 };
@@ -30,6 +28,7 @@ export const getToken = async () => {
 export const login = async (email: string, password: string) => {
   await AsyncStorage.removeItem('token');
   await AsyncStorage.removeItem('role');
+
   try {
     const response = await fetch(`${API_URL}/login`, {
       method: 'POST',
@@ -59,26 +58,32 @@ export const login = async (email: string, password: string) => {
 // Logout Function (Clears Token & Navigates to Login)
 export const logout = async (router: any) => {
   try {
-    await AsyncStorage.removeItem('authToken'); // Remove JWT Token
+    await AsyncStorage.removeItem('authToken');
     console.log("Logged out successfully");
-    router.push('/login'); // Navigate to login page
+    router.push('/login');
   } catch (error) {
-    console.error(' Error logging out:', error);
+    console.error('Error logging out:', error);
   }
 };
 
 // Register User
-export const registerUser = async (firstName: string, lastName: string, email: string, password: string, role: string) => {
+export const registerUser = async (
+  firstName: string,
+  lastName: string,
+  email: string,
+  password: string,
+  role: string
+) => {
   try {
     const response = await fetch(`${API_URL}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        first_name: firstName, 
-        last_name: lastName, 
-        email, 
-        password, 
-        role 
+      body: JSON.stringify({
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        password,
+        role,
       }),
     });
 
@@ -90,7 +95,7 @@ export const registerUser = async (firstName: string, lastName: string, email: s
       throw new Error(data.error || 'Registration failed');
     }
   } catch (error) {
-    console.error(' Registration error:', error);
+    console.error('Registration error:', error);
     return null;
   }
 };
