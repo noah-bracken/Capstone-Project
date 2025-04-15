@@ -1,4 +1,21 @@
+import { Platform } from 'react-native';
 import { StyleSheet } from 'react-native';
+
+const crossPlatformShadow = Platform.select({
+  ios: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  android: {
+    elevation: 3,
+  },
+  web: {
+    boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
+  },
+});
+
 
 const styles = StyleSheet.create({
   container: {
@@ -46,10 +63,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
+    ...crossPlatformShadow,
     marginTop: 8,
   },
   settingsButton: {
@@ -63,10 +77,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...crossPlatformShadow,
   },
   homeButton: {
     backgroundColor: '#4C1D95',
@@ -100,10 +111,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
     elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
+    ...crossPlatformShadow,
   },
   classButtonText: {
     fontSize: 18,
@@ -298,11 +306,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#fff',
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
+    ...crossPlatformShadow,
   },
   classCode: {
     fontSize: 28,
@@ -326,11 +330,7 @@ const styles = StyleSheet.create({
     margin: 10,
     borderRadius: 12,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
+    ...crossPlatformShadow,
   },
   classCardHeader: {
     height: 40,

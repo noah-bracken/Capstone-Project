@@ -3,10 +3,10 @@ import { View, Text, TouchableOpacity, ActivityIndicator, Platform } from 'react
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../../../components/capstone/styles';
-import { ClassType } from '../../types';
+import { ClassType } from '../../../components/capstone/types';
 import AttendanceQRCode from '../../../components/capstone/ClassQRCode';
-import ClassCodeModal from './[id]/classCode';
-import PrintQRCode from './[id]/PrintQRCode';
+import ClassCodeModal from './[classID]/classCode';
+import PrintQRCode from './[classID]/PrintQRCode';
 
 const API_URL = 'https://capstone-db-lb2e.onrender.com';
 

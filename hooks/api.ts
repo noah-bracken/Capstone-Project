@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ClassType } from '../app/types';
+import { ClassType } from '../components/capstone/types';
 
 const API_URL = 'https://capstone-db-lb2e.onrender.com';
 

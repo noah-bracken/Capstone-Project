@@ -96,12 +96,21 @@ const styles = StyleSheet.create({
       borderRadius: 20,
       paddingVertical: 20,
       paddingHorizontal: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-      elevation: 6,
-    },
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.2,
+          shadowRadius: 8,
+        },
+        android: {
+          elevation: 6,
+        },
+        web: {
+          boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)',
+        },
+      }),
+    },    
     title: {
       fontSize: 20,
       fontWeight: 'bold',

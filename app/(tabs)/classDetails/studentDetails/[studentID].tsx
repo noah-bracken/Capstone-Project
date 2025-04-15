@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../../../../components/capstone/styles';
@@ -7,7 +7,7 @@ import styles from '../../../../components/capstone/styles';
 const API_URL = 'https://capstone-db-lb2e.onrender.com';
 
 export default function StudentDetails() {
-  const { id } = useLocalSearchParams();
+  const { id, studentID } = useLocalSearchParams();
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function StudentDetails() {
     const fetchStudent = async () => {
       const token = await AsyncStorage.getItem('token');
       try {
-        const res = await fetch(`${API_URL}/students/${id}`, {
+        const res = await fetch(`${API_URL}/students/${studentID}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -29,8 +29,8 @@ export default function StudentDetails() {
       }
     };
 
-    if (id) fetchStudent();
-  }, [id]);
+    if (studentID) fetchStudent();
+  }, [studentID]);
 
   if (loading) {
     return (

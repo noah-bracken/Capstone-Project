@@ -59,8 +59,8 @@ export default function RootLayout() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="login" />
         <Stack.Screen name="signup" />
-        <Stack.Screen name="(tabs)/classDetails/[id]" />
         <Stack.Screen name="addClass" />
+        <Stack.Screen name="(tabs)" />
       </Stack>
     </ClassProvider>
   );
