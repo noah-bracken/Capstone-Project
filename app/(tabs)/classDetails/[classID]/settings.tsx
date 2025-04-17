@@ -16,7 +16,7 @@ import ConfirmModal from '../../../../components/capstone/confirm';
 
 export default function ClassSettingsScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { classID } = useLocalSearchParams<{ classID: string }>();
   const { refreshClasses } = useClassContext();
   const [modalVisible, setModalVisible] = useState(false);
   const [className, setClassName] = useState('');
@@ -30,18 +30,22 @@ export default function ClassSettingsScreen() {
 
   useEffect(() => {
     const fetchDetails = async () => {
-      if (!id) return;
-      const data = await fetchClassSettings(id);
-
-      if (!data) {
-        Alert.alert('Error', 'Failed to load class details.');
+      if (!classID) {
         return;
       }
-
+  
+      console.log('Fetching class settings...');
+      const data = await fetchClassSettings(classID);
+      console.log('Fetch returned:', data);
+  
+      if (!data) {
+        return;
+      }
+  
       setClassName(data.class_name || '');
       setDescription(data.description || '');
       setColor(data.color || '#4C1D95');
-
+  
       if (Array.isArray(data.meeting_times)) {
         const cleaned = data.meeting_times.map((t: any) => {
           const [h, m] = (t.time || '00:00').split(':');
@@ -53,12 +57,12 @@ export default function ClassSettingsScreen() {
         });
         setMeetingTimes(cleaned);
       }
-
       setLoading(false);
     };
-
-    fetchDetails();
-  }, [id]);
+  
+    fetchDetails().catch((e) => console.log('Unhandled fetchDetails error:', e));
+  }, [classID]);  
+  
 
   const handleAddMeetingTime = (day: string, hour: number, minute: number) => {
     const formattedHour = hour.toString().padStart(2, '0');
@@ -92,11 +96,11 @@ export default function ClassSettingsScreen() {
     }
 
     try {
-      const result = await updateClass(id as string, className, description, color, meetingTimes);
+      const result = await updateClass(classID as string, className, description, color, meetingTimes);
       if (result?.message) {
         Alert.alert('Success', 'Class updated successfully.');
         await refreshClasses();
-        router.replace(`/(tabs)/classDetails/${id}`);
+        router.replace(`/(tabs)/classDetails/${classID}`);
       } else {
         Alert.alert('Error', 'Failed to update class.');
       }
@@ -108,7 +112,7 @@ export default function ClassSettingsScreen() {
   const handleDeleteClass = async () => {
     setModalVisible(false);
 
-    const classId = Array.isArray(id) ? id[0] : id;
+    const classId = Array.isArray(classID) ? classID[0] : classID;
     const response = await deleteClass(classId);
 
     if (response?.message) {

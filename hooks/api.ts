@@ -94,6 +94,8 @@ export const fetchClassSettings = async (classId: string) => {
     const token = await AsyncStorage.getItem('token');
     if (!token) throw new Error('No token found');
 
+    console.log('[fetchClassSettings] token found, fetching:', classId);
+
     const response = await fetch(`${API_URL}/classes/${classId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -101,10 +103,13 @@ export const fetchClassSettings = async (classId: string) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch class settings');
+      const err = await response.text();
+      console.error('[fetchClassSettings] Failed to fetch class settings:', err);
+      return null;
     }
 
     const classData = await response.json();
+
     const timesResponse = await fetch(`${API_URL}/classes/${classId}/meeting-times`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -112,20 +117,22 @@ export const fetchClassSettings = async (classId: string) => {
     });
 
     if (!timesResponse.ok) {
-      throw new Error('Failed to fetch meeting times');
+      const err = await timesResponse.text();
+      console.error('[fetchClassSettings] Failed to fetch meeting times:', err);
+      return null;
     }
 
     const meeting_times = await timesResponse.json();
-
     return {
       ...classData,
       meeting_times,
     };
   } catch (error) {
-    console.error('fetchClassSettings error:', error);
-    throw error;
+    console.error('[fetchClassSettings] Exception:', error);
+    return null;
   }
 };
+
 
 // Update class settings
 export const updateClass = async (

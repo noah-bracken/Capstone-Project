@@ -16,7 +16,7 @@ interface ClassData extends ClassType {
   students: { user_id: number; first_name: string; last_name: string }[];
   teacher_name?: string;
   meeting_times?: { day: string; time: string }[];
-  latest_session_id: number;
+  latest_qr_id: number; // Changed from latest_session_id
 }
 
 export default function ClassScreen() {
@@ -32,29 +32,8 @@ export default function ClassScreen() {
   } | null>(null);
   const [hasSessionToday, setHasSessionToday] = useState(false);
 
-  useEffect(() => {
-    const fetchClassData = async () => {
-      try {
-        const response = await fetch(`${API_URL}/classes/${id}`);
-        const data = await response.json();
-        setClassData(data);
-
-        const today = new Date().toLocaleString('en-US', { weekday: 'long' });
-        const hasToday = data.meeting_times?.some((mt: any) => mt.day === today);
-        setHasSessionToday(!!hasToday);
-      } catch (error) {
-        console.error('Error fetching class details:', error);
-      }
-    };
-
-    const getRoleAndToken = async () => {
-      const storedRole = await AsyncStorage.getItem('role');
-      const token = await AsyncStorage.getItem('token');
-      setRole(storedRole);
-      setSessionToken(token);
-    };
-
-    const fetchAttendanceSummary = async () => {
+  const fetchAttendanceSummary = async () => {
+      if (!sessionToken || !id) return;
       try {
         const response = await fetch(`${API_URL}/classes/${id}/attendance-summary`, {
           headers: {
@@ -67,13 +46,43 @@ export default function ClassScreen() {
         console.error('Error fetching attendance summary:', error);
       }
     };
+    
+// Get role and token
+useEffect(() => {
+  const getRoleAndToken = async () => {
+    const storedRole = await AsyncStorage.getItem('role');
+    const token = await AsyncStorage.getItem('token');
+    setRole(storedRole);
+    setSessionToken(token);
+  };
+  getRoleAndToken();
+}, []);
 
-    fetchClassData();
-    getRoleAndToken();
-    if (sessionToken) fetchAttendanceSummary();
-  }, [id, sessionToken]);
+// When token is ready, fetch attendance summary
+useEffect(() => {
+  fetchAttendanceSummary();
+}, [sessionToken, id]);
 
-  if (!classData || !role) {
+// Fetch class data
+useEffect(() => {
+  const fetchClassData = async () => {
+    try {
+      const response = await fetch(`${API_URL}/classes/${id}`);
+      const data = await response.json();
+      setClassData(data);
+      console.log('Fetched class data:', data);
+      
+      const today = new Date().toLocaleString('en-US', { weekday: 'long' });
+      const hasToday = data.meeting_times?.some((mt: any) => mt.day === today);
+      setHasSessionToday(!!hasToday);
+    } catch (error) {
+      console.error('Error fetching class details:', error);
+    }
+  };
+  if (id) fetchClassData();
+}, [id]);
+
+  if (!classData || !role || !sessionToken) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#1E3A8A" />
@@ -81,10 +90,17 @@ export default function ClassScreen() {
     );
   }
 
+  
+
   const markAttendance = async (
     studentId: number,
     status: 'present' | 'absent' | 'late'
   ) => {
+    if (!classData?.latest_qr_id) {
+      console.warn("QR session is missing.");
+      return;
+    }
+
     try {
       const response = await fetch(`${API_URL}/attendance/manual`, {
         method: 'POST',
@@ -94,13 +110,14 @@ export default function ClassScreen() {
         },
         body: JSON.stringify({
           class_id: id,
-          qr_id: classData?.latest_session_id,
+          qr_id: classData.latest_qr_id,
           student_id: studentId,
           status,
-        }),        
+        }),
       });
       const data = await response.json();
       console.log('Marked attendance:', data);
+      fetchAttendanceSummary();
     } catch (error) {
       console.error('Error marking attendance:', error);
     }
@@ -162,22 +179,22 @@ export default function ClassScreen() {
 
                   <View style={styles.attendanceButtons}>
                     <TouchableOpacity
-                      style={[styles.attendanceButton, { backgroundColor: hasSessionToday ? '#10B981' : '#9CA3AF' }]}
-                      disabled={!hasSessionToday}
+                      style={[styles.attendanceButton, { backgroundColor: hasSessionToday && classData.latest_qr_id ? '#10B981' : '#9CA3AF' }]}
+                      disabled={!hasSessionToday || !classData.latest_qr_id}
                       onPress={() => markAttendance(student.user_id, 'present')}
                     >
                       <Text style={styles.buttonText}>P</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.attendanceButton, { backgroundColor: hasSessionToday ? '#FBBF24' : '#9CA3AF' }]}
-                      disabled={!hasSessionToday}
+                      style={[styles.attendanceButton, { backgroundColor: hasSessionToday && classData.latest_qr_id ? '#FBBF24' : '#9CA3AF' }]}
+                      disabled={!hasSessionToday || !classData.latest_qr_id}
                       onPress={() => markAttendance(student.user_id, 'late')}
                     >
                       <Text style={styles.buttonText}>L</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.attendanceButton, { backgroundColor: hasSessionToday ? '#EF4444' : '#9CA3AF' }]}
-                      disabled={!hasSessionToday}
+                      style={[styles.attendanceButton, { backgroundColor: hasSessionToday && classData.latest_qr_id ? '#EF4444' : '#9CA3AF' }]}
+                      disabled={!hasSessionToday || !classData.latest_qr_id}
                       onPress={() => markAttendance(student.user_id, 'absent')}
                     >
                       <Text style={styles.buttonText}>A</Text>
@@ -188,9 +205,9 @@ export default function ClassScreen() {
             )}
           </View>
 
-          {hasSessionToday && <AttendanceQRCode classId={id} />}
+          {hasSessionToday && classData.latest_qr_id && <AttendanceQRCode classId={id} />}
 
-          {Platform.OS === 'web' && sessionToken && hasSessionToday && (
+          {Platform.OS === 'web' && sessionToken && hasSessionToday && classData.latest_qr_id && (
             <PrintQRCode classId={id as string} sessionToken={sessionToken} />
           )}
 
