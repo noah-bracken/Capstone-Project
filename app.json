@@ -4,9 +4,9 @@
     "slug": "NOMark",
     "version": "11.6.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "logo": "./assets/images/logo.png",
-    "scheme": "myapp",
+    "scheme": "NOMark",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {

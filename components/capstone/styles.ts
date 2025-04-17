@@ -418,7 +418,41 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     marginRight: 10,
   },
-    
+  attendanceSummaryContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 12,
+    paddingHorizontal: 16,
+  },
+  
+  attendanceBox: {
+    flex: 1,
+    marginHorizontal: 6,
+    backgroundColor: '#E0F2FE',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  
+  attendanceTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0369A1',
+    marginBottom: 4,
+  },
+  
+  attendanceValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#0C4A6E',
+  },
+  
 });
 
 export default styles;
