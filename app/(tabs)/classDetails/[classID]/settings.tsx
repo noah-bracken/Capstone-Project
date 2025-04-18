@@ -63,31 +63,55 @@ export default function ClassSettingsScreen() {
     fetchDetails().catch((e) => console.log('Unhandled fetchDetails error:', e));
   }, [classID]);  
   
+  const isAtLeastOneHourApart = (
+      newDay: string,
+      newHour: number,
+      newMinute: number,
+      existing: { day: string; hour: string; minute: string }[]
+    ) => {
+      const newTime = newHour * 60 + newMinute;
+    
+      return !existing.some(({ day, hour, minute }) => {
+        if (day !== newDay) return false;
+    
+        const existingTime = parseInt(hour) * 60 + parseInt(minute);
+        const diff = Math.abs(existingTime - newTime);
+    
+        return diff < 60;
+      });
+    };  
 
+    const removeMeetingTime = (index: number) => {
+      setMeetingTimes((prev) => prev.filter((_, i) => i !== index));
+    };
+    
   const handleAddMeetingTime = (day: string, hour: number, minute: number) => {
     const formattedHour = hour.toString().padStart(2, '0');
     const formattedMinute = minute.toString().padStart(2, '0');
-
+  
     if (meetingTimes.length >= 5) {
       Alert.alert('Limit Reached', 'You can only add up to 5 meeting times.');
       return;
     }
-
+  
     const duplicate = meetingTimes.some(
       (t) => t.day === day && t.hour === formattedHour && t.minute === formattedMinute
     );
-
+  
     if (duplicate) {
       Alert.alert('Duplicate', 'This meeting time already exists.');
       return;
     }
-
+  
+    if (!isAtLeastOneHourApart(day, hour, minute, meetingTimes)) {
+      Alert.alert('Too Close', 'Meeting times must be at least 1 hour apart.');
+      return;
+    }
+  
     setMeetingTimes([...meetingTimes, { day, hour: formattedHour, minute: formattedMinute }]);
   };
 
-  const removeMeetingTime = (index: number) => {
-    setMeetingTimes((prev) => prev.filter((_, i) => i !== index));
-  };
+  
 
   const handleSave = async () => {
     if (!className.trim()) {

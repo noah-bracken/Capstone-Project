@@ -26,31 +26,54 @@ export default function AddClassScreen() {
   >([]);
   const [showModal, setShowModal] = useState(false);
 
+  const isAtLeastOneHourApart = (
+      newDay: string,
+      newHour: number,
+      newMinute: number,
+      existing: { day: string; hour: string; minute: string }[]
+    ) => {
+      const newTime = newHour * 60 + newMinute;
+    
+      return !existing.some(({ day, hour, minute }) => {
+        if (day !== newDay) return false;
+    
+        const existingTime = parseInt(hour) * 60 + parseInt(minute);
+        const diff = Math.abs(existingTime - newTime);
+    
+        return diff < 60;
+      });
+    };  
+    
   const addMeetingTime = (day: string, hour: number, minute: number) => {
     const formattedHour = hour.toString().padStart(2, '0');
     const formattedMinute = minute.toString().padStart(2, '0');
-
+  
     if (meetingTimes.length >= 5) {
-      console.log('Meeting limit reached');
       showAlert('Limit Reached', 'You can only add up to 5 meeting times.');
       return;
     }
-
+  
     const exists = meetingTimes.some(
       (t) => t.day === day && t.hour === formattedHour && t.minute === formattedMinute
     );
-
+  
     if (exists) {
-      console.log('Duplicate meeting time');
       showAlert('Duplicate Time', 'This meeting time already exists.');
       return;
     }
-
+  
+    if (!isAtLeastOneHourApart(day, hour, minute, meetingTimes)) {
+      showAlert('Too Close', 'Meeting times must be at least 1 hour apart.');
+      return;
+    }
+  
     setMeetingTimes(prev => [
       ...prev,
       { day, hour: formattedHour, minute: formattedMinute },
     ]);
-  };
+  };  
+
+  
 
   const removeMeetingTime = (index: number) => {
     setMeetingTimes(meetingTimes.filter((_, i) => i !== index));

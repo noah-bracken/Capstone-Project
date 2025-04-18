@@ -8,7 +8,7 @@ import { ClassType } from '../../../components/capstone/types';
 import AttendanceQRCode from '../../../components/capstone/ClassQRCode';
 import ClassCodeModal from './[classID]/classCode';
 import PrintQRCode from './[classID]/PrintQRCode';
-import AttendanceGauge from '../../../components/capstone/AttendanceGauge';
+import QuartileGaugeLayout from '../../../components/capstone/GaugeLayout';
 
 const API_URL = 'https://capstone-db-lb2e.onrender.com';
 
@@ -31,6 +31,7 @@ export default function ClassScreen() {
     recentAttendance: number;
   } | null>(null);
   const [hasSessionToday, setHasSessionToday] = useState(false);
+  const [studentStatuses, setStudentStatuses] = useState<{ [key: number]: 'present' | 'late' | 'absent' | null }>({});
 
   const fetchAttendanceSummary = async () => {
       if (!sessionToken || !id) return;
@@ -73,8 +74,9 @@ useEffect(() => {
       console.log('Fetched class data:', data);
       
       const today = new Date().toLocaleString('en-US', { weekday: 'long' });
-      const hasToday = data.meeting_times?.some((mt: any) => mt.day === today);
-      setHasSessionToday(!!hasToday);
+      const todayMeeting = data.meeting_times?.find((mt: any) => mt.day === today) || null;
+      setHasSessionToday(!!todayMeeting);
+
     } catch (error) {
       console.error('Error fetching class details:', error);
     }
@@ -90,38 +92,62 @@ useEffect(() => {
     );
   }
 
+  const isWithinAttendanceWindow = (day: string, time: string) => {
+    const now = new Date();
+    const today = now.toLocaleString('en-US', { weekday: 'long' });
   
-
-  const markAttendance = async (
-    studentId: number,
-    status: 'present' | 'absent' | 'late'
-  ) => {
-    if (!classData?.latest_qr_id) {
-      console.warn("QR session is missing.");
-      return;
+    const [hourStr, minuteStr] = time.split(':');
+    const hour = parseInt(hourStr, 10);
+    const minute = parseInt(minuteStr, 10);
+  
+    const classTime = new Date();
+    classTime.setHours(hour, minute, 0, 0);
+  
+    const diffInMinutes = (classTime.getTime() - now.getTime()) / 60000;
+  
+    const inWindow = day === today && diffInMinutes >= -15 && diffInMinutes <= 15;
+  
+    if (day === today) {
+      console.log(`[DEBUG] Comparing: now = ${now.toTimeString()}, classTime = ${classTime.toTimeString()}, diff = ${diffInMinutes.toFixed(2)} mins, active = ${inWindow}`);
     }
-
-    try {
-      const response = await fetch(`${API_URL}/attendance/manual`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({
-          class_id: id,
-          qr_id: classData.latest_qr_id,
-          student_id: studentId,
-          status,
-        }),
-      });
-      const data = await response.json();
-      console.log('Marked attendance:', data);
-      fetchAttendanceSummary();
-    } catch (error) {
-      console.error('Error marking attendance:', error);
-    }
+  
+    return inWindow;
   };
+  
+  const markAttendance = async (
+  studentId: number,
+  status: 'present' | 'absent' | 'late'
+) => {
+  if (!classData?.latest_qr_id) {
+    console.warn("QR session is missing.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/attendance/manual`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionToken}`,
+      },
+      body: JSON.stringify({
+        class_id: id,
+        qr_id: classData.latest_qr_id,
+        student_id: studentId,
+        status,
+      }),
+    });
+    const data = await response.json();
+    console.log('Marked attendance:', data);
+
+    setStudentStatuses((prev) => ({ ...prev, [studentId]: status }));
+
+    fetchAttendanceSummary();
+  } catch (error) {
+    console.error('Error marking attendance:', error);
+  }
+};
+
 
   return (
     <View style={styles.container}>
@@ -136,14 +162,10 @@ useEffect(() => {
       )}
 
       {role === 'teacher' && attendanceSummary && (
-        <View style={styles.attendanceSummaryContainer}>
-          <AttendanceGauge
-            label="Total Attendance"
-            percentage={attendanceSummary.totalAttendance}
-          />
-          <AttendanceGauge
-            label="Last Session"
-            percentage={attendanceSummary.recentAttendance}
+        <View style={{ height: 200, width: '100%', position: 'relative' }}>
+          <QuartileGaugeLayout
+            total={attendanceSummary.totalAttendance}
+            recent={attendanceSummary.recentAttendance}
           />
         </View>
       )}
@@ -151,11 +173,14 @@ useEffect(() => {
       {classData.meeting_times && classData.meeting_times.length > 0 && (
         <View style={styles.meetingTimesBox}>
           <Text style={styles.sectionTitle}>Meeting Times:</Text>
-          {classData.meeting_times.map((mt, index) => (
-            <Text key={index} style={styles.meetingTimeText}>
-              • {mt.day} at {mt.time}
-            </Text>
-          ))}
+          {classData.meeting_times.map((mt, index) => {
+            const isActive = isWithinAttendanceWindow(mt.day, mt.time);
+            return (
+              <Text key={index} style={styles.meetingTimeText}>
+                • {mt.day} at {mt.time} {isActive && <Text style={styles.activeMeeting}>— active</Text>}
+              </Text>
+            );
+          })}
         </View>
       )}
 
@@ -179,27 +204,60 @@ useEffect(() => {
 
                   <View style={styles.attendanceButtons}>
                     <TouchableOpacity
-                      style={[styles.attendanceButton, { backgroundColor: hasSessionToday && classData.latest_qr_id ? '#10B981' : '#9CA3AF' }]}
-                      disabled={!hasSessionToday || !classData.latest_qr_id}
+                      style={[
+                        styles.attendanceButton,
+                        {
+                          backgroundColor:
+                            studentStatuses[student.user_id] === 'present'
+                              ? '#065F46'
+                              : hasSessionToday && classData.latest_qr_id
+                              ? '#10B981'
+                              : '#9CA3AF',
+                        },
+                      ]}
+                      disabled={!hasSessionToday /* || !classData.latest_qr_id */ }
                       onPress={() => markAttendance(student.user_id, 'present')}
                     >
                       <Text style={styles.buttonText}>P</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
-                      style={[styles.attendanceButton, { backgroundColor: hasSessionToday && classData.latest_qr_id ? '#FBBF24' : '#9CA3AF' }]}
-                      disabled={!hasSessionToday || !classData.latest_qr_id}
+                      style={[
+                        styles.attendanceButton,
+                        {
+                          backgroundColor:
+                            studentStatuses[student.user_id] === 'late'
+                              ? '#92400E'
+                              : hasSessionToday && classData.latest_qr_id
+                              ? '#FBBF24'
+                              : '#9CA3AF',
+                        },
+                      ]}
+                      disabled={!hasSessionToday /* || !classData.latest_qr_id */ }
                       onPress={() => markAttendance(student.user_id, 'late')}
                     >
                       <Text style={styles.buttonText}>L</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
-                      style={[styles.attendanceButton, { backgroundColor: hasSessionToday && classData.latest_qr_id ? '#EF4444' : '#9CA3AF' }]}
-                      disabled={!hasSessionToday || !classData.latest_qr_id}
+                      style={[
+                        styles.attendanceButton,
+                        {
+                          backgroundColor:
+                            studentStatuses[student.user_id] === 'absent'
+                              ? '#7F1D1D'
+                              : hasSessionToday && classData.latest_qr_id
+                              ? '#EF4444'
+                              : '#9CA3AF',
+                        },
+                      ]}
+                      disabled={!hasSessionToday /* || !classData.latest_qr_id */ }
                       onPress={() => markAttendance(student.user_id, 'absent')}
                     >
                       <Text style={styles.buttonText}>A</Text>
                     </TouchableOpacity>
                   </View>
+
                 </View>
               ))
             )}
@@ -207,7 +265,7 @@ useEffect(() => {
 
           {hasSessionToday && classData.latest_qr_id && <AttendanceQRCode classId={id} />}
 
-          {Platform.OS === 'web' && sessionToken && hasSessionToday && classData.latest_qr_id && (
+          {Platform.OS === 'web' && sessionToken && hasSessionToday && /*classData.latest_qr_id && */ (
             <PrintQRCode classId={id as string} sessionToken={sessionToken} />
           )}
 

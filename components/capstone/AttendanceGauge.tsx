@@ -8,7 +8,7 @@ interface Props {
   }  
 
 export default function AttendanceGauge({ percentage, label }: Props) {
-  const radius = 40;
+  const radius = 80;
   const strokeWidth = 8;
   const center = radius + strokeWidth;
   const circumference = 2 * Math.PI * radius;
@@ -49,7 +49,8 @@ export default function AttendanceGauge({ percentage, label }: Props) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    margin: 12,
+    marginHorizontal: 4,
+    marginVertical: 8,   // optional: keep a bit of vertical spacing
   },
   percentText: {
     position: 'absolute',

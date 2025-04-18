@@ -420,10 +420,16 @@ const styles = StyleSheet.create({
   },
   attendanceSummaryContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 12,
-    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
   },
+
+  activeMeeting: {
+    color: '#16A34A',
+    fontWeight: '600',
+  },
+  
   
   attendanceBox: {
     flex: 1,

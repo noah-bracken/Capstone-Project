@@ -31,7 +31,7 @@ export default function HomeScreen() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);  
   const [firstName, setFirstName] = useState('');
-
+  
   useEffect(() => {
     const checkAuth = async () => {
       try {
