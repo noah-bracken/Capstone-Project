@@ -12,11 +12,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
 import { useClassContext } from '../context/ClassContext';
 import { getToken } from '../hooks/auth';
+import { fetchUserAcceptanceStatus, acceptTerms } from '../hooks/api';
 import styles from '../components/capstone/styles';
 import JoinModal from '../components/capstone/joinClass';
 import AnimatedClassCard from '../components/capstone/AnimatedButton';
 import ReminderBanner from '../components/capstone/ReminderBanner';
 import { useClassReminders } from '../hooks/useClassReminders';
+import TermsModal from '../components/capstone/TermsModal';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -26,18 +28,25 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const { reminder, clearReminder, goToAction } = useClassReminders(role);
-
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);  
   const [firstName, setFirstName] = useState('');
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         await SplashScreen.preventAutoHideAsync();
-  
         const token = await getToken();
         const storedRole = await AsyncStorage.getItem('role');
         const storedFirstName = await AsyncStorage.getItem('firstName');
-  
+        const storedId = await AsyncStorage.getItem('user_id');
+        const { user_id, has_accepted_terms } = await fetchUserAcceptanceStatus();
+        setUserId(user_id);
+        if (!has_accepted_terms) {
+          setShowTermsModal(true);
+        }
+        if (storedId) setUserId(Number(storedId));
+
         if (!token) {
           router.replace('/login');
         } else {
@@ -50,6 +59,7 @@ export default function HomeScreen() {
         setLoading(false);
       } catch (err) {
         console.error("Error in auth check:", err);
+        router.push("/login");
       } finally {
         await new Promise(resolve => setTimeout(resolve, 1000));
         await SplashScreen.hideAsync();
@@ -125,6 +135,23 @@ export default function HomeScreen() {
           }}
         />
       )}
+      <TermsModal
+        visible={showTermsModal}
+        onAccept={async () => {
+          try {
+            if (userId) {
+              await acceptTerms(userId);
+              setShowTermsModal(false);
+            }
+          } catch (err) {
+            console.error("Error accepting terms:", err);
+          }
+        }}
+        onDecline={async () => {
+          await AsyncStorage.clear();
+          router.replace('/login');
+        }}
+      />
     </View>
   );
 }

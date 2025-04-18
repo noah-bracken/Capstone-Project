@@ -13,6 +13,42 @@ const getToken = async () => {
     return null;
   }
 };
+//terms and conditions
+export const fetchUserAcceptanceStatus = async () => {
+  const token = await AsyncStorage.getItem('token');
+  if (!token) throw new Error('No token found');
+
+  const res = await fetch(`${API_URL}/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) throw new Error('Failed to fetch user status');
+  const data = await res.json();
+
+  return {
+    user_id: data.user_id,
+    has_accepted_terms: data.has_accepted_terms,
+  };
+};
+
+export const acceptTerms = async (userId: number) => {
+  const token = await AsyncStorage.getItem('token');
+  if (!token) throw new Error('Missing token');
+
+  const res = await fetch(`${API_URL}/users/${userId}/accept-terms`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) throw new Error('Failed to accept terms');
+
+  await AsyncStorage.setItem('hasAcceptedTerms', 'true');
+  return true;
+};
 
 //Add Class with meeting times
 export const createClass = async ({
@@ -88,6 +124,7 @@ export const fetchMeetingTimes = async (classId: string) => {
     return [];
   }
 };
+
 //Fetch class settings
 export const fetchClassSettings = async (classId: string) => {
   try {

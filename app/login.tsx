@@ -23,7 +23,6 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     console.log("Attempting to login...");
-  
     const result = await login(email, password);
   
     if (!result) {
@@ -31,14 +30,17 @@ export default function LoginScreen() {
       return;
     }
   
-    const { token, role, user_id, first_name } = result;
-
+    const { token, role, user_id, first_name, has_accepted_terms = false } = result;
+  
     console.log('Got login result:', result);
 
+    await AsyncStorage.setItem('hasAcceptedTerms', String(has_accepted_terms));
+  
     if (first_name) {
       await AsyncStorage.setItem('firstName', first_name);
       console.log('Stored first name:', first_name);
     }
+  
     console.log("Token & Role Stored:", token, role);
   
     showAlert('Login Successful', 'Welcome back!');
@@ -73,6 +75,7 @@ export default function LoginScreen() {
   
     router.push('/');
   };
+  
 
   return (
     <View style={styles.container}>
