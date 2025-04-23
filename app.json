@@ -4,13 +4,12 @@
     "slug": "NOMark",
     "version": "13.1.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
-    "logo": "./assets/images/logo.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "NOMark",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/logo.png",
+      "image": "./assets/images/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
@@ -19,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.anonymous.NOMark",
