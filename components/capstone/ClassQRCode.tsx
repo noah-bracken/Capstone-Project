@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, Pressable, Alert } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { v4 as uuidv4 } from 'uuid';
 import styles from './styles';
-import { storeSessionToken } from '../../hooks/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AttendanceQRCodeProps {
   classId: string | string[];
@@ -13,42 +12,52 @@ export default function AttendanceQRCode({ classId }: AttendanceQRCodeProps) {
   const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  const generateQRCode = async () => {
-    const token = uuidv4();
-    const timestamp = Date.now();
-
+  const showQRCode = async () => {
     try {
-      // Save session token to backend
-      await storeSessionToken(classId.toString(), token, timestamp);
+      const token = await AsyncStorage.getItem('token');
+      const class_id = typeof classId === 'string' ? classId : classId[0];
 
-      // Create QR data
+      const res = await fetch(`https://capstone-db-lb2e.onrender.com/classes/${class_id}/latest-session`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch session (${res.status})`);
+      }
+
+      const data = await res.json();
+
+      if (!data || !data.session_token) {
+        Alert.alert('No Active QR', 'There is no attendance session available right now.');
+        return;
+      }
+
       const qrData = JSON.stringify({
-        class_id: classId,
-        session_token: token,
+        class_id,
+        session_token: data.session_token,
       });
 
       setQrCodeValue(qrData);
       setShowModal(true);
     } catch (error) {
-      console.error('Failed to generate session token', error);
-      Alert.alert('Error', 'Could not generate QR code.');
+      console.error('Failed to fetch QR session:', error);
+      Alert.alert('Error', 'Could not load QR code.');
     }
   };
 
   return (
     <View>
-      <TouchableOpacity
-        style={styles.homeButton}
-        onPress={generateQRCode}
-      >
-        <Text style={styles.buttonText}>Generate Attendance QR</Text>
+      <TouchableOpacity style={styles.homeButton} onPress={showQRCode}>
+        <Text style={styles.buttonText}>Show Attendance QR</Text>
       </TouchableOpacity>
 
       <Modal visible={showModal} transparent animationType="fade">
         <Pressable
           style={{
             flex: 1,
-            backgroundColor: 'black',
+            backgroundColor: 'rgba(0,0,0,0.8)',
             justifyContent: 'center',
             alignItems: 'center',
           }}

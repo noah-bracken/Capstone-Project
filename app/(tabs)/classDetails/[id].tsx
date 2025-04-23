@@ -9,6 +9,9 @@ import AttendanceQRCode from '../../../components/capstone/ClassQRCode';
 import ClassCodeModal from './[classID]/classCode';
 import PrintQRCode from './[classID]/PrintQRCode';
 import QuartileGaugeLayout from '../../../components/capstone/GaugeLayout';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+
 
 const API_URL = 'https://capstone-db-lb2e.onrender.com';
 
@@ -16,7 +19,7 @@ interface ClassData extends ClassType {
   students: { user_id: number; first_name: string; last_name: string }[];
   teacher_name?: string;
   meeting_times?: { day: string; time: string }[];
-  latest_qr_id: number; // Changed from latest_session_id
+  latest_qr_id: number; 
 }
 
 export default function ClassScreen() {
@@ -30,8 +33,27 @@ export default function ClassScreen() {
     totalAttendance: number;
     recentAttendance: number;
   } | null>(null);
-  const [hasSessionToday, setHasSessionToday] = useState(false);
   const [studentStatuses, setStudentStatuses] = useState<{ [key: number]: 'present' | 'late' | 'absent' | null }>({});
+  const [withinWindow, setWithinWindow] = useState(false);
+
+  const isWithinAttendanceWindow = () => {
+    if (!classData?.meeting_times) return false;
+  
+    const now = new Date();
+    const today = now.toLocaleString('en-US', { weekday: 'long' });
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  
+    return classData.meeting_times.some((mt: any) => {
+      if (mt.day !== today) return false;
+  
+      const [hourStr, minuteStr] = mt.time.split(':');
+      const scheduledMinutes = parseInt(hourStr) * 60 + parseInt(minuteStr);
+  
+      return currentMinutes >= scheduledMinutes - 15 && currentMinutes <= scheduledMinutes + 15;
+    });
+  };
+
+  const withinAttendanceWindow = isWithinAttendanceWindow();
 
   const fetchAttendanceSummary = async () => {
       if (!sessionToken || !id) return;
@@ -47,42 +69,121 @@ export default function ClassScreen() {
         console.error('Error fetching attendance summary:', error);
       }
     };
+
+    const fetchCurrentAttendance = async (
+      qrId?: number,
+      students?: ClassData['students']
+    ) => {
+      const qr_id = qrId ?? classData?.latest_qr_id;
+      const studentList = students ?? classData?.students;
+      if (!qr_id || !sessionToken || !studentList) return;
     
-// Get role and token
-useEffect(() => {
-  const getRoleAndToken = async () => {
-    const storedRole = await AsyncStorage.getItem('role');
-    const token = await AsyncStorage.getItem('token');
-    setRole(storedRole);
-    setSessionToken(token);
-  };
-  getRoleAndToken();
-}, []);
+      try {
+        const res = await fetch(`${API_URL}/sessions/${qr_id}/attendance`, {
+          headers: { Authorization: `Bearer ${sessionToken}` },
+        });
+    
+        const data = await res.json();
+        const newStatuses: { [key: number]: 'present' | 'late' | 'absent' } = {};
+    
+        // Default all students to 'absent'
+        studentList.forEach((s) => {
+          newStatuses[s.user_id] = 'absent';
+        });
+    
+        // Override with real attendance
+        data.forEach((entry: any) => {
+          newStatuses[entry.student_id] = entry.status;
+        });
+    
+        setStudentStatuses(newStatuses);
+      } catch (err) {
+        console.error('Error fetching current attendance:', err);
+      }
+    };
 
-// When token is ready, fetch attendance summary
-useEffect(() => {
-  fetchAttendanceSummary();
-}, [sessionToken, id]);
+  useFocusEffect(
+    useCallback(() => {
+      if (role === 'teacher' && sessionToken && classData?.latest_qr_id) {
+        fetchCurrentAttendance();
+        fetchAttendanceSummary();
+      }
+    }, [role, sessionToken, classData?.latest_qr_id])
+  );
 
-// Fetch class data
-useEffect(() => {
-  const fetchClassData = async () => {
-    try {
-      const response = await fetch(`${API_URL}/classes/${id}`);
-      const data = await response.json();
-      setClassData(data);
-      console.log('Fetched class data:', data);
-      
-      const today = new Date().toLocaleString('en-US', { weekday: 'long' });
-      const todayMeeting = data.meeting_times?.find((mt: any) => mt.day === today) || null;
-      setHasSessionToday(!!todayMeeting);
+  // Get role and token
+  useEffect(() => {
+    const getRoleAndToken = async () => {
+      const storedRole = await AsyncStorage.getItem('role');
+      const token = await AsyncStorage.getItem('token');
+      setRole(storedRole);
+      setSessionToken(token);
+    };
+    getRoleAndToken();
+  }, []);
 
-    } catch (error) {
-      console.error('Error fetching class details:', error);
-    }
-  };
-  if (id) fetchClassData();
-}, [id]);
+  // When token is ready, fetch attendance summary
+  useEffect(() => {
+    fetchAttendanceSummary();
+  }, [sessionToken, id]);
+
+  // Fetch class data
+  useEffect(() => {
+    const fetchClassData = async () => {
+      try {
+        const response = await fetch(`${API_URL}/classes/${id}`);
+        const data = await response.json();
+        setClassData(data);
+        console.log('Fetched class data:', data);
+      } catch (error) {
+        console.error('Error fetching class details:', error);
+      }
+    };
+    if (id) fetchClassData();
+  }, [id]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (role !== 'teacher') return;
+      try {
+        const [classRes, attendanceRes] = await Promise.all([
+          fetch(`${API_URL}/classes/${id}`),
+          fetch(`${API_URL}/classes/${id}/attendance-summary`, {
+            headers: {
+              Authorization: `Bearer ${sessionToken}`,
+            },
+          }),
+        ]);
+  
+        const classJson = await classRes.json();
+        const attendanceJson = await attendanceRes.json();
+  
+        setClassData(classJson);
+        setAttendanceSummary(attendanceJson);
+        await fetchCurrentAttendance(classJson.latest_qr_id, classJson.students);
+  
+        // Recalculate attendance window
+        if (classJson.meeting_times) {
+          const now = new Date();
+          const today = now.toLocaleString('en-US', { weekday: 'long' });
+          const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  
+          const isActive = classJson.meeting_times.some((mt: any) => {
+            if (mt.day !== today) return false;
+            const [hourStr, minuteStr] = mt.time.split(':');
+            const scheduledMinutes = parseInt(hourStr) * 60 + parseInt(minuteStr);
+            return currentMinutes >= scheduledMinutes - 15 && currentMinutes <= scheduledMinutes + 15;
+          });
+  
+          setWithinWindow(isActive);
+        }
+      } catch (err) {
+        console.error('Auto-refresh error:', err);
+      }
+    }, 15000);
+  
+    return () => clearInterval(interval);
+  }, [id, sessionToken, role]);
 
   if (!classData || !role || !sessionToken) {
     return (
@@ -91,28 +192,6 @@ useEffect(() => {
       </View>
     );
   }
-
-  const isWithinAttendanceWindow = (day: string, time: string) => {
-    const now = new Date();
-    const today = now.toLocaleString('en-US', { weekday: 'long' });
-  
-    const [hourStr, minuteStr] = time.split(':');
-    const hour = parseInt(hourStr, 10);
-    const minute = parseInt(minuteStr, 10);
-  
-    const classTime = new Date();
-    classTime.setHours(hour, minute, 0, 0);
-  
-    const diffInMinutes = (classTime.getTime() - now.getTime()) / 60000;
-  
-    const inWindow = day === today && diffInMinutes >= -15 && diffInMinutes <= 15;
-  
-    if (day === today) {
-      console.log(`[DEBUG] Comparing: now = ${now.toTimeString()}, classTime = ${classTime.toTimeString()}, diff = ${diffInMinutes.toFixed(2)} mins, active = ${inWindow}`);
-    }
-  
-    return inWindow;
-  };
   
   const markAttendance = async (
   studentId: number,
@@ -140,9 +219,9 @@ useEffect(() => {
     const data = await response.json();
     console.log('Marked attendance:', data);
 
-    setStudentStatuses((prev) => ({ ...prev, [studentId]: status }));
+    await fetchCurrentAttendance();
+    await fetchAttendanceSummary();
 
-    fetchAttendanceSummary();
   } catch (error) {
     console.error('Error marking attendance:', error);
   }
@@ -174,10 +253,16 @@ useEffect(() => {
         <View style={styles.meetingTimesBox}>
           <Text style={styles.sectionTitle}>Meeting Times:</Text>
           {classData.meeting_times.map((mt, index) => {
-            const isActive = isWithinAttendanceWindow(mt.day, mt.time);
+            const isActive = withinAttendanceWindow;
+            const formattedTime = new Date(`1970-01-01T${mt.time}`).toLocaleTimeString('en-US', {
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true,
+            });
+
             return (
               <Text key={index} style={styles.meetingTimeText}>
-                • {mt.day} at {mt.time} {isActive && <Text style={styles.activeMeeting}>— active</Text>}
+                • {mt.day} at {formattedTime} {isActive && <Text style={styles.activeMeeting}>— active</Text>}
               </Text>
             );
           })}
@@ -188,7 +273,7 @@ useEffect(() => {
         <>
           <View style={styles.studentList}>
             <Text style={styles.sectionTitle}>Students:</Text>
-            {classData.students.length === 0 ? (
+            {!classData.students || classData.students.length === 0 ? (
               <Text style={styles.studentItem}>No students enrolled yet.</Text>
             ) : (
               classData.students.map((student) => (
@@ -210,12 +295,10 @@ useEffect(() => {
                           backgroundColor:
                             studentStatuses[student.user_id] === 'present'
                               ? '#065F46'
-                              : hasSessionToday && classData.latest_qr_id
-                              ? '#10B981'
-                              : '#9CA3AF',
+                              : withinAttendanceWindow && classData.latest_qr_id ? '#10B981' : '#9CA3AF',
                         },
                       ]}
-                      disabled={!hasSessionToday /* || !classData.latest_qr_id */ }
+                      disabled={!withinAttendanceWindow}
                       onPress={() => markAttendance(student.user_id, 'present')}
                     >
                       <Text style={styles.buttonText}>P</Text>
@@ -228,12 +311,10 @@ useEffect(() => {
                           backgroundColor:
                             studentStatuses[student.user_id] === 'late'
                               ? '#92400E'
-                              : hasSessionToday && classData.latest_qr_id
-                              ? '#FBBF24'
-                              : '#9CA3AF',
+                              : withinAttendanceWindow && classData.latest_qr_id ? '#FBBF24' : '#9CA3AF',
                         },
                       ]}
-                      disabled={!hasSessionToday /* || !classData.latest_qr_id */ }
+                      disabled={!withinAttendanceWindow}
                       onPress={() => markAttendance(student.user_id, 'late')}
                     >
                       <Text style={styles.buttonText}>L</Text>
@@ -246,12 +327,10 @@ useEffect(() => {
                           backgroundColor:
                             studentStatuses[student.user_id] === 'absent'
                               ? '#7F1D1D'
-                              : hasSessionToday && classData.latest_qr_id
-                              ? '#EF4444'
-                              : '#9CA3AF',
+                              : withinAttendanceWindow && classData.latest_qr_id ? '#EF4444' : '#9CA3AF',
                         },
                       ]}
-                      disabled={!hasSessionToday /* || !classData.latest_qr_id */ }
+                      disabled={!withinAttendanceWindow}
                       onPress={() => markAttendance(student.user_id, 'absent')}
                     >
                       <Text style={styles.buttonText}>A</Text>
@@ -263,11 +342,19 @@ useEffect(() => {
             )}
           </View>
 
-          {hasSessionToday && classData.latest_qr_id && <AttendanceQRCode classId={id} />}
+          {withinAttendanceWindow && classData.latest_qr_id && <AttendanceQRCode classId={id} />}
 
-          {Platform.OS === 'web' && sessionToken && hasSessionToday && /*classData.latest_qr_id && */ (
+          {Platform.OS === 'web' && classData.latest_qr_id && withinAttendanceWindow && (
             <PrintQRCode classId={id as string} sessionToken={sessionToken} />
           )}
+
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => router.push(`/classDetails/${id}/pastSession`)}
+          >
+            <Text style={styles.buttonText}>📅 View Past Sessions</Text>
+          </TouchableOpacity>
+
 
           <TouchableOpacity style={styles.homeButton} onPress={() => setShowCodeModal(true)}>
             <Text style={styles.buttonText}>Show Class Code</Text>

@@ -40,7 +40,9 @@ export default function TermsModal({ visible, onAccept, onDecline }: Props) {
   const BulletList = ({ items }: { items: string[] }) => (
     <View style={{ paddingLeft: 16, marginBottom: 8 }}>
       {items.map((item, index) => (
-        <Text key={index} style={{ fontSize: 14, marginBottom: 4 }}>{'\u2022'} {item}</Text>
+        <Text key={index} style={{ fontSize: 14, marginBottom: 4, lineHeight: 20 }}>
+          {item}
+        </Text>
       ))}
     </View>
   );

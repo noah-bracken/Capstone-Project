@@ -31,7 +31,7 @@ export const useClassReminders = (role: string | null) => {
           for (const { day, time } of times) {
             const meetingDate = getNextMeetingDate(day, time);
             const diff = meetingDate.getTime() - now.getTime();
-            console.log(`[DEBUG] ${cls.class_name} → ${meetingDate.toString()} | Diff: ${Math.floor(diff / 60000)} min`);
+            // console.log(`[DEBUG] ${cls.class_name} → ${meetingDate.toString()} | Diff: ${Math.floor(diff / 60000)} min`);
 
             if (diff > 0 && diff < 15 * 60 * 1000) {
               setReminder({ classId: cls.class_id, className: cls.class_name });

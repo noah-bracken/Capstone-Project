@@ -25,6 +25,20 @@ export default function SignupScreen() {
   const [role, setRole] = useState<'student' | 'teacher'>('student');
 
   const handleSignup = async () => {
+
+///////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+/////////////make sure to update this///////////////////////
+////////////////////////////////////////////////////////////
+
+    /*const emailRegex = /^[^\s@]+@[^\s@]+\.(com|org|net|edu|gov|io|co|us)$/i;
+  
+    if (!emailRegex.test(email)) {
+      showAlert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }*/
+  
     const result = await registerUser(firstName, lastName, email, password, role);
   
     if (!result) {
@@ -52,6 +66,7 @@ export default function SignupScreen() {
   
     router.push('/login');
   };
+  
 
   return (
     <View style={styles.container}>

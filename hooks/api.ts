@@ -396,15 +396,30 @@ export async function storeSessionToken(classId: string, token: string, timestam
 }
 
 // Validate token
-export async function validateSessionToken(classId: string, token: string) {
-  const response = await fetch(`${API_URL}/classes/${classId}/validate-session`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ session_token: token }),
-  });
-  const data = await response.json();
-  return data.valid;
-}
+export const validateSessionToken = async (class_id: String, session_token: String, token: String) => {
+  try {
+    const response = await fetch(`${API_URL}/classes/${class_id}/validate-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ session_token }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      console.warn('Validation failed:', data.error);
+      return false;
+    }
+
+    return data.valid;
+  } catch (err) {
+    console.error('Validation error:', err);
+    return false;
+  }
+};
+
 //register new device
 export async function storeDeviceId(userId: number, deviceId: string) {
   const response = await fetch(`${API_URL}/bind-device`, {

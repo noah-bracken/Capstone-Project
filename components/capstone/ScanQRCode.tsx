@@ -14,10 +14,13 @@ import {
   BarcodeScanningResult,
 } from 'expo-camera';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
-import { validateSessionToken, verifyDevice, getCurrentUserId } from '../../hooks/api';
+import { verifyDevice, getCurrentUserId } from '../../hooks/api';
 import * as Device from 'expo-device';
 import * as SecureStore from 'expo-secure-store';
+
+const API_URL = 'https://capstone-db-lb2e.onrender.com';
 
 export default function ScanQRCodeScreen() {
   const router = useRouter();
@@ -58,7 +61,7 @@ export default function ScanQRCodeScreen() {
   
         try {
           const userId = await getCurrentUserId();
-          await verifyDevice(userId, currentId); // server check
+          await verifyDevice(userId, currentId);
         } catch (err) {
           console.error('Server device check failed:', err);
           setScanMessage("Unauthorized device (server check)");
@@ -69,16 +72,29 @@ export default function ScanQRCodeScreen() {
       const { data } = scanningResult;
       const parsed = JSON.parse(data);
       const { class_id, session_token } = parsed;
+      console.log("Scanned QR data:", data);
   
-      const isValid = await validateSessionToken(class_id, session_token);
-      if (isValid) {
-        const time = new Date().toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-        setScanMessage(`Attendance marked at ${time}`);
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        console.warn('Token not found');
+        return;
+      }
+  
+      const response = await fetch(`${API_URL}/attendance/scan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ class_id, session_token }),
+      });
+  
+      const result = await response.json();
+  
+      if (response.ok) {
+        setScanMessage(result.message || 'Attendance marked!');
       } else {
-        setScanMessage('Invalid or expired QR code');
+        setScanMessage(result.error || 'Failed to mark attendance');
       }
   
     } catch (err) {

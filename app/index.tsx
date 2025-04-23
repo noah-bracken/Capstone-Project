@@ -5,7 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Image
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,6 +20,8 @@ import ReminderBanner from '../components/capstone/ReminderBanner';
 import { useClassReminders } from '../hooks/useClassReminders';
 import TermsModal from '../components/capstone/TermsModal';
 
+const API_URL = 'https://capstone-db-lb2e.onrender.com';
+
 export default function HomeScreen() {
   const router = useRouter();
   const { classes, refreshClasses } = useClassContext();
@@ -29,43 +31,64 @@ export default function HomeScreen() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const { reminder, clearReminder, goToAction } = useClassReminders(role);
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [userId, setUserId] = useState<number | null>(null);  
+  const [userId, setUserId] = useState<number | null>(null);
   const [firstName, setFirstName] = useState('');
-  
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
         await SplashScreen.preventAutoHideAsync();
-        const token = await getToken();
-        const storedRole = await AsyncStorage.getItem('role');
-        const storedFirstName = await AsyncStorage.getItem('firstName');
-        const storedId = await AsyncStorage.getItem('user_id');
-        const { user_id, has_accepted_terms } = await fetchUserAcceptanceStatus();
+
+        const token = await AsyncStorage.getItem('token');
+        if (!token) {
+          console.warn('No token found. Redirecting to login.');
+          router.replace('/login');
+          return;
+        }
+
+        // Get user session info from backend
+        const res = await fetch(`${API_URL}/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) {
+          console.warn('Failed to fetch /me. Redirecting to login.');
+          await AsyncStorage.clear();
+          router.replace('/login');
+          return;
+        }
+
+        const data = await res.json();
+        const { role, first_name, user_id, has_accepted_terms } = data;
+
+        // Store in AsyncStorage
+        await AsyncStorage.multiSet([
+          ['role', role],
+          ['firstName', first_name],
+          ['user_id', String(user_id)],
+          ['hasAcceptedTerms', String(has_accepted_terms)],
+        ]);
+
+        // Set state
+        setRole(role);
+        setFirstName(first_name);
         setUserId(user_id);
+
         if (!has_accepted_terms) {
           setShowTermsModal(true);
         }
-        if (storedId) setUserId(Number(storedId));
 
-        if (!token) {
-          router.replace('/login');
-        } else {
-          setIsAuthenticated(true);
-          setRole(storedRole);
-          if (storedFirstName) setFirstName(storedFirstName);
-          await refreshClasses();
-        }
-  
-        setLoading(false);
+        setIsAuthenticated(true);
+        await refreshClasses();
       } catch (err) {
-        console.error("Error in auth check:", err);
-        router.push("/login");
+        console.error('Error checking auth:', err);
+        router.replace('/login');
       } finally {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setLoading(false);
         await SplashScreen.hideAsync();
       }
     };
-  
+
     checkAuth();
   }, []);
 
@@ -126,6 +149,7 @@ export default function HomeScreen() {
           />
         </>
       )}
+
       {reminder && (
         <ReminderBanner
           className={reminder.className}
@@ -135,12 +159,14 @@ export default function HomeScreen() {
           }}
         />
       )}
+
       <TermsModal
         visible={showTermsModal}
         onAccept={async () => {
           try {
             if (userId) {
               await acceptTerms(userId);
+              await AsyncStorage.setItem('hasAcceptedTerms', 'true');
               setShowTermsModal(false);
             }
           } catch (err) {

@@ -11,7 +11,7 @@ interface Props {
 
 const PrintQRCode: React.FC<Props> = ({ classId, sessionToken }) => {
   const handlePrintWeb = async () => {
-    const qrValue = JSON.stringify({ classId, sessionToken });
+    const qrValue = JSON.stringify({ class_id: classId, session_token: sessionToken });
     const qrDataUrl = await QRCode.toDataURL(qrValue);
   
     const html = `
