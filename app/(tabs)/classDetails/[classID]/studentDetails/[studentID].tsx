@@ -24,7 +24,8 @@ type SessionData = {
   scanned_at?: string;
 };
 
-export default function AttendanceHistory() {
+
+export default function StudentDetails() {
   const { classID, studentID } = useLocalSearchParams();
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -57,8 +58,7 @@ export default function AttendanceHistory() {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        if (Array.isArray(data)) setSessions(data);
-        else setSessions([]);
+        setSessions(data);
       } catch (err) {
         console.error('Error fetching recent attendance:', err);
       }
@@ -73,21 +73,19 @@ export default function AttendanceHistory() {
   const fetchAttendanceByDate = async (date: Date) => {
     const token = await AsyncStorage.getItem('token');
     const formatted = date.toISOString().split('T')[0];
-    try {
-      const res = await fetch(`${API_URL}/students/${studentID}/attendance/by-date/${formatted}?class_id=${classID}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
+  
+    const res = await fetch(`${API_URL}/students/${studentID}/attendance/by-date/${formatted}?class_id=${classID}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  
+    const data = await res.json();
       if (Array.isArray(data)) {
         setSessions(data);
       } else {
+        console.error('Invalid session data:', data);
         setSessions([]);
       }
-    } catch (err) {
-      console.error('Error fetching by date:', err);
-      setSessions([]);
-    }
-  };
+  };  
 
   if (loading) {
     return (
@@ -107,10 +105,14 @@ export default function AttendanceHistory() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Attendance History</Text>
+      <Text style={styles.title}>NOMark</Text>
       <TouchableOpacity style={styles.homeButton} onPress={() => router.back()}>
         <Text style={styles.buttonText}>↩ Back</Text>
       </TouchableOpacity>
+
+      <Text style={styles.title}>Student Details</Text>
+      <Text style={styles.text}>Name: {student.first_name} {student.last_name}</Text>
+      <Text style={styles.text}>Email: {student.email}</Text>
 
       <Text style={styles.subtitle}>Recent Attendance (Last 10 Sessions)</Text>
 
@@ -212,6 +214,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
     borderRadius: 6,
     marginVertical: 4,
+  },
+  studentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 6,
+  },
+  statusButtons: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  statusButton: {
+    padding: 6,
+    borderWidth: 1,
+    borderColor: '#9CA3AF',
+    borderRadius: 4,
+    marginLeft: 4,
+  },
+  activeStatus: {
+    backgroundColor: '#93C5FD',
+    borderColor: '#3B82F6',
+  },
+  statusText: {
+    fontWeight: 'bold',
+    color: '#1E3A8A',
   },
   homeButton: {
     backgroundColor: '#4C1D95',

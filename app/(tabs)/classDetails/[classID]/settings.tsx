@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  ActivityIndicator
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import styles from '../../../../components/capstone/styles';
@@ -13,10 +14,12 @@ import TimePickerModal from '../../../../components/capstone/TimePickerModal';
 import { useClassContext } from '../../../../context/ClassContext';
 import { fetchClassSettings, updateClass, deleteClass } from '../../../../hooks/api';
 import ConfirmModal from '../../../../components/capstone/confirm';
+import { ClassType } from '../../../../components/capstone/types'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ClassSettingsScreen() {
   const router = useRouter();
-  const { classID } = useLocalSearchParams<{ classID: string }>();
+  const { classID, preload } = useLocalSearchParams<{ classID: string; preload?: string }>();
   const { refreshClasses } = useClassContext();
   const [modalVisible, setModalVisible] = useState(false);
   const [className, setClassName] = useState('');
@@ -27,41 +30,53 @@ export default function ClassSettingsScreen() {
   >([]);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [classData, setClassData] = useState<ClassType | null>(
+    preload ? JSON.parse(preload) : null
+  );
+  
+  useEffect(() => {
+    if (classData) {
+      setClassName(classData.class_name || '');
+      setDescription(classData.description || '');
+      setColor(classData.color || '#4C1D95');
+      setMeetingTimes(
+        classData.meeting_times?.map((mt) => {
+          const [hour, minute] = mt.time.split(':');
+          return {
+            day: mt.day,
+            hour: hour.padStart(2, '0'),
+            minute: minute.padStart(2, '0'),
+          };
+        }) || []
+      );
+    }
+  }, [classData]);
 
   useEffect(() => {
-    const fetchDetails = async () => {
-      if (!classID) {
-        return;
-      }
-  
-      console.log('Fetching class settings...');
-      const data = await fetchClassSettings(classID);
-      console.log('Fetch returned:', data);
-  
-      if (!data) {
-        return;
-      }
-  
-      setClassName(data.class_name || '');
-      setDescription(data.description || '');
-      setColor(data.color || '#4C1D95');
-  
-      if (Array.isArray(data.meeting_times)) {
-        const cleaned = data.meeting_times.map((t: any) => {
-          const [h, m] = (t.time || '00:00').split(':');
-          return {
-            day: t.day || 'Monday',
-            hour: h?.padStart(2, '0') || '00',
-            minute: m?.padStart(2, '0') || '00',
-          };
-        });
-        setMeetingTimes(cleaned);
-      }
+
+    if (classData) {
       setLoading(false);
-    };
+      return;
+    }
   
-    fetchDetails().catch((e) => console.log('Unhandled fetchDetails error:', e));
-  }, [classID]);  
+    const fetchDetails = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (!token || !classID) return;
+    
+        const data = await fetchClassSettings(classID);
+        setClassData(data);
+      } catch (e) {
+        console.error('Error fetching settings:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+  
+    fetchDetails().catch((e) => console.error('Error fetching settings:', e));
+  }, [classID]);
+   
   
   const isAtLeastOneHourApart = (
       newDay: string,
@@ -151,8 +166,10 @@ export default function ClassSettingsScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
+        <ActivityIndicator size="large" color="#1E3A8A" />
         <Text style={styles.title}>Loading Class Settings...</Text>
       </View>
+
     );
   }
 

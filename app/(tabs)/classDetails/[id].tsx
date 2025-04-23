@@ -253,7 +253,17 @@ export default function ClassScreen() {
         <View style={styles.meetingTimesBox}>
           <Text style={styles.sectionTitle}>Meeting Times:</Text>
           {classData.meeting_times.map((mt, index) => {
-            const isActive = withinAttendanceWindow;
+            const now = new Date();
+            const today = now.toLocaleString('en-US', { weekday: 'long' });
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            const [hourStr, minuteStr] = mt.time.split(':');
+            const scheduledMinutes = parseInt(hourStr) * 60 + parseInt(minuteStr);
+
+            const isActive = mt.day === today &&
+              currentMinutes >= scheduledMinutes - 15 &&
+              currentMinutes <= scheduledMinutes + 15;
+
             const formattedTime = new Date(`1970-01-01T${mt.time}`).toLocaleTimeString('en-US', {
               hour: 'numeric',
               minute: '2-digit',
@@ -280,7 +290,7 @@ export default function ClassScreen() {
                 <View key={student.user_id} style={styles.studentCard}>
                   <TouchableOpacity
                     style={{ flex: 1 }}
-                    onPress={() => router.push(`./studentDetails/${student.user_id}`)}
+                    onPress={() => router.push(`/classDetails/${id}/studentDetails/${student.user_id}`)}
                   >
                     <Text style={styles.studentName}>
                       {student.first_name} {student.last_name}
@@ -362,8 +372,10 @@ export default function ClassScreen() {
 
           <TouchableOpacity
             style={styles.settingsButton}
-            onPress={() => router.push(`/classDetails/${id}/settings`)}
-          >
+            onPress={() => router.push({
+              pathname: `/classDetails/[classID]/settings`,
+              params: { classID: id as string }
+            })}>
             <Text style={styles.buttonText}>⚙️</Text>
           </TouchableOpacity>
 
@@ -386,8 +398,16 @@ export default function ClassScreen() {
 
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={() => router.push(`/classDetails/${id}/attendanceHistory`)}
-          >
+            onPress={async () => {
+              const user_id = await AsyncStorage.getItem('user_id');
+              router.push({
+                pathname: `/classDetails/[classID]/attendanceHistory`,
+                params: {
+                  classID: id as string,
+                  studentID: user_id!,
+                },
+              });
+            }}>
             <Text style={styles.buttonText}>📊 View Attendance History</Text>
           </TouchableOpacity>
         </>
