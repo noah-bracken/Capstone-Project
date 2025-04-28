@@ -26,18 +26,12 @@ export default function SignupScreen() {
 
   const handleSignup = async () => {
 
-///////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////
-/////////////make sure to update this///////////////////////
-////////////////////////////////////////////////////////////
-
-    /*const emailRegex = /^[^\s@]+@[^\s@]+\.(com|org|net|edu|gov|io|co|us)$/i;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.(com|org|net|edu|gov|io|co|us)$/i;
   
     if (!emailRegex.test(email)) {
       showAlert('Invalid Email', 'Please enter a valid email address.');
       return;
-    }*/
+    }
   
     const result = await registerUser(firstName, lastName, email, password, role);
   
@@ -69,8 +63,8 @@ export default function SignupScreen() {
   
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create an Account</Text>
+    <View style={styles.centeredResponsiveContainer}>
+      <Text style={[styles.title, {marginBottom: 20}]}>Create an Account</Text>
 
       <TextInput
         style={styles.input}

@@ -7,6 +7,7 @@ import * as Device from 'expo-device';
 import * as SecureStore from 'expo-secure-store';
 import { storeDeviceId } from '../hooks/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const showAlert = (title: string, message: string) => {
   if (Platform.OS === 'web') {
@@ -85,8 +86,8 @@ export default function LoginScreen() {
   };  
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login to NOMark</Text>
+    <View style={styles.centeredResponsiveContainer}>
+      <Text style={[styles.title, { marginBottom: 20}]}>Login to NOMark</Text>
 
       <TextInput
         style={styles.input}

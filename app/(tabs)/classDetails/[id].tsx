@@ -1,7 +1,7 @@
-// [id].tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Platform, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../../../components/capstone/styles';
 import { ClassType } from '../../../components/capstone/types';
@@ -9,6 +9,7 @@ import AttendanceQRCode from '../../../components/capstone/ClassQRCode';
 import ClassCodeModal from './[classID]/classCode';
 import PrintQRCode from './[classID]/PrintQRCode';
 import QuartileGaugeLayout from '../../../components/capstone/GaugeLayout';
+import AttendanceGauge from '../../../components/capstone/AttendanceGauge';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 
@@ -35,6 +36,7 @@ export default function ClassScreen() {
   } | null>(null);
   const [studentStatuses, setStudentStatuses] = useState<{ [key: number]: 'present' | 'late' | 'absent' | null }>({});
   const [withinWindow, setWithinWindow] = useState(false);
+  const [studentAttendanceRate, setStudentAttendanceRate] = useState<number | null>(null);
 
   const isWithinAttendanceWindow = () => {
     if (!classData?.meeting_times) return false;
@@ -56,20 +58,38 @@ export default function ClassScreen() {
   const withinAttendanceWindow = isWithinAttendanceWindow();
 
   const fetchAttendanceSummary = async () => {
-      if (!sessionToken || !id) return;
-      try {
-        const response = await fetch(`${API_URL}/classes/${id}/attendance-summary`, {
-          headers: {
-            Authorization: `Bearer ${sessionToken}`,
-          },
-        });
-        const data = await response.json();
-        setAttendanceSummary(data);
-      } catch (error) {
-        console.error('Error fetching attendance summary:', error);
-      }
-    };
+    if (!sessionToken || !id) return;
+    try {
+      const response = await fetch(`${API_URL}/classes/${id}/attendance-summary`, {
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      });
+      const data = await response.json();
+      setAttendanceSummary(data);
+    } catch (error) {
+      console.error('Error fetching attendance summary:', error);
+    }
+  };
 
+  const fetchStudentAttendanceRate = async () => {
+    const user_id = await AsyncStorage.getItem('user_id');
+    if (!sessionToken || !id || !user_id) return;
+  
+    try {
+      const response = await fetch(`${API_URL}/students/${user_id}/attendance/summary?class_id=${id}`, {
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      });
+  
+      const data = await response.json();
+      setStudentAttendanceRate(data.totalAttendance);
+    } catch (error) {
+      console.error('Error fetching student attendance rate:', error);
+    }
+  };
+    
     const fetchCurrentAttendance = async (
       qrId?: number,
       students?: ClassData['students']
@@ -102,14 +122,20 @@ export default function ClassScreen() {
       }
     };
 
-  useFocusEffect(
-    useCallback(() => {
-      if (role === 'teacher' && sessionToken && classData?.latest_qr_id) {
-        fetchCurrentAttendance();
-        fetchAttendanceSummary();
-      }
-    }, [role, sessionToken, classData?.latest_qr_id])
-  );
+    useFocusEffect(
+      useCallback(() => {
+        if (!sessionToken || !id) return;
+    
+        if (role === 'teacher' && classData?.latest_qr_id) {
+          fetchCurrentAttendance();
+          fetchAttendanceSummary();
+        }
+    
+        if (role === 'student') {
+          fetchStudentAttendanceRate();
+        }
+      }, [role, sessionToken, classData?.latest_qr_id])
+    );    
 
   // Get role and token
   useEffect(() => {
@@ -229,13 +255,32 @@ export default function ClassScreen() {
 
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
+      {role === 'teacher' && (
+        <TouchableOpacity
+        style={styles.settingsButton}
+        onPress={() => router.push({
+          pathname: `/classDetails/[classID]/settings`,
+          params: { classID: id as string }
+        })}>
+        <Text style={styles.buttonText}>⚙️</Text>
+      </TouchableOpacity>)}
+      
       <Text style={styles.title}>NOMark</Text>
-      <TouchableOpacity style={styles.homeButton} onPress={() => router.push('/')}>
-        <Text style={styles.buttonText}>↩ Home Page</Text>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+        <Ionicons name="arrow-back" size={24} color="#1E3A8A" />
+        <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
 
-      <Text style={styles.classTitle}>{classData.class_name}</Text>
+      <Text
+        style={[
+          styles.classTitle,
+          Platform.OS === 'web' && role === 'teacher' && { marginLeft: 20 }
+        ]}
+      >
+        {classData.class_name}
+      </Text>
+
       {role === 'student' && classData.teacher_name && (
         <Text style={styles.subtitle}>Taught by {classData.teacher_name}</Text>
       )}
@@ -248,170 +293,179 @@ export default function ClassScreen() {
           />
         </View>
       )}
-
-      {classData.meeting_times && classData.meeting_times.length > 0 && (
-        <View style={styles.meetingTimesBox}>
-          <Text style={styles.sectionTitle}>Meeting Times:</Text>
-          {classData.meeting_times.map((mt, index) => {
-            const now = new Date();
-            const today = now.toLocaleString('en-US', { weekday: 'long' });
-            const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-            const [hourStr, minuteStr] = mt.time.split(':');
-            const scheduledMinutes = parseInt(hourStr) * 60 + parseInt(minuteStr);
-
-            const isActive = mt.day === today &&
-              currentMinutes >= scheduledMinutes - 15 &&
-              currentMinutes <= scheduledMinutes + 15;
-
-            const formattedTime = new Date(`1970-01-01T${mt.time}`).toLocaleTimeString('en-US', {
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true,
-            });
-
-            return (
-              <Text key={index} style={styles.meetingTimeText}>
-                • {mt.day} at {formattedTime} {isActive && <Text style={styles.activeMeeting}>— active</Text>}
-              </Text>
-            );
-          })}
+      {role === 'student' && studentAttendanceRate !== null && (
+        <View style={{ alignItems: 'center', marginVertical: 16 }}>
+          <AttendanceGauge
+            percentage={studentAttendanceRate}
+            label="Your Attendance"
+          />
         </View>
       )}
+      <View style={styles.responsiveWrapper}>
+        {classData.meeting_times && classData.meeting_times.length > 0 && (
+          <View style={styles.meetingTimesBox}>
+            <Text style={styles.sectionTitle}>Meeting Times:</Text>
 
-      {role === 'teacher' ? (
-        <>
-          <View style={styles.studentList}>
-            <Text style={styles.sectionTitle}>Students:</Text>
-            {!classData.students || classData.students.length === 0 ? (
-              <Text style={styles.studentItem}>No students enrolled yet.</Text>
-            ) : (
-              classData.students.map((student) => (
-                <View key={student.user_id} style={styles.studentCard}>
-                  <TouchableOpacity
-                    style={{ flex: 1 }}
-                    onPress={() => router.push(`/classDetails/${id}/studentDetails/${student.user_id}`)}
-                  >
-                    <Text style={styles.studentName}>
-                      {student.first_name} {student.last_name}
-                    </Text>
-                  </TouchableOpacity>
+            {[...classData.meeting_times]
+              .sort((a, b) => {
+                const dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                return dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day);
+              })
+              .map((mt, index) => {
+                const now = new Date();
+                const today = now.toLocaleString('en-US', { weekday: 'long' });
+                const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-                  <View style={styles.attendanceButtons}>
-                    <TouchableOpacity
-                      style={[
-                        styles.attendanceButton,
-                        {
-                          backgroundColor:
-                            studentStatuses[student.user_id] === 'present'
-                              ? '#065F46'
-                              : withinAttendanceWindow && classData.latest_qr_id ? '#10B981' : '#9CA3AF',
-                        },
-                      ]}
-                      disabled={!withinAttendanceWindow}
-                      onPress={() => markAttendance(student.user_id, 'present')}
-                    >
-                      <Text style={styles.buttonText}>P</Text>
-                    </TouchableOpacity>
+                const [hourStr, minuteStr] = mt.time.split(':');
+                const scheduledMinutes = parseInt(hourStr) * 60 + parseInt(minuteStr);
 
-                    <TouchableOpacity
-                      style={[
-                        styles.attendanceButton,
-                        {
-                          backgroundColor:
-                            studentStatuses[student.user_id] === 'late'
-                              ? '#92400E'
-                              : withinAttendanceWindow && classData.latest_qr_id ? '#FBBF24' : '#9CA3AF',
-                        },
-                      ]}
-                      disabled={!withinAttendanceWindow}
-                      onPress={() => markAttendance(student.user_id, 'late')}
-                    >
-                      <Text style={styles.buttonText}>L</Text>
-                    </TouchableOpacity>
+                const isActive =
+                  mt.day === today &&
+                  currentMinutes >= scheduledMinutes - 15 &&
+                  currentMinutes <= scheduledMinutes + 15;
 
-                    <TouchableOpacity
-                      style={[
-                        styles.attendanceButton,
-                        {
-                          backgroundColor:
-                            studentStatuses[student.user_id] === 'absent'
-                              ? '#7F1D1D'
-                              : withinAttendanceWindow && classData.latest_qr_id ? '#EF4444' : '#9CA3AF',
-                        },
-                      ]}
-                      disabled={!withinAttendanceWindow}
-                      onPress={() => markAttendance(student.user_id, 'absent')}
-                    >
-                      <Text style={styles.buttonText}>A</Text>
-                    </TouchableOpacity>
-                  </View>
+                const formattedTime = new Date(`1970-01-01T${mt.time}`).toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                });
 
-                </View>
-              ))
-            )}
+                return (
+                  <Text key={index} style={styles.meetingTimeText}>
+                    • {mt.day} at {formattedTime}
+                    {isActive && <Text style={styles.activeMeeting}> — active</Text>}
+                  </Text>
+                );
+              })}
           </View>
+        )}
+        {role === 'teacher' ? (
+          <>
+            <View style={styles.studentList}>
+              <Text style={styles.sectionTitle}>Students:</Text>
+              {!classData.students || classData.students.length === 0 ? (
+                <Text style={styles.studentItem}>No students enrolled yet.</Text>
+              ) : (
+                [...classData.students]
+                  .sort((a, b) => a.last_name.localeCompare(b.last_name))
+                  .map((student) => (
+                    <View key={student.user_id} style={styles.studentCard}>
+                    <TouchableOpacity
+                      style={{ flex: 1 }}
+                      onPress={() => router.push(`/classDetails/${id}/studentDetails/${student.user_id}`)}
+                    >
+                      <Text style={styles.studentName}>
+                        {student.first_name} {student.last_name}
+                      </Text>
+                    </TouchableOpacity>
 
-          {withinAttendanceWindow && classData.latest_qr_id && <AttendanceQRCode classId={id} />}
+                    <View style={styles.attendanceButtons}>
+                      <TouchableOpacity
+                        style={[
+                          styles.attendanceButton,
+                          {
+                            backgroundColor:
+                              studentStatuses[student.user_id] === 'present'
+                                ? '#065F46'
+                                : withinAttendanceWindow && classData.latest_qr_id ? '#10B981' : '#9CA3AF',
+                          },
+                        ]}
+                        disabled={!withinAttendanceWindow}
+                        onPress={() => markAttendance(student.user_id, 'present')}
+                      >
+                        <Text style={styles.buttonText}>P</Text>
+                      </TouchableOpacity>
 
-          {Platform.OS === 'web' && classData.latest_qr_id && withinAttendanceWindow && (
-            <PrintQRCode classId={id as string} sessionToken={sessionToken} />
-          )}
+                      <TouchableOpacity
+                        style={[
+                          styles.attendanceButton,
+                          {
+                            backgroundColor:
+                              studentStatuses[student.user_id] === 'late'
+                                ? '#92400E'
+                                : withinAttendanceWindow && classData.latest_qr_id ? '#FBBF24' : '#9CA3AF',
+                          },
+                        ]}
+                        disabled={!withinAttendanceWindow}
+                        onPress={() => markAttendance(student.user_id, 'late')}
+                      >
+                        <Text style={styles.buttonText}>L</Text>
+                      </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.push(`/classDetails/${id}/pastSession`)}
-          >
-            <Text style={styles.buttonText}>📅 View Past Sessions</Text>
-          </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.attendanceButton,
+                          {
+                            backgroundColor:
+                              studentStatuses[student.user_id] === 'absent'
+                                ? '#7F1D1D'
+                                : withinAttendanceWindow && classData.latest_qr_id ? '#EF4444' : '#9CA3AF',
+                          },
+                        ]}
+                        disabled={!withinAttendanceWindow}
+                        onPress={() => markAttendance(student.user_id, 'absent')}
+                      >
+                        <Text style={styles.buttonText}>A</Text>
+                      </TouchableOpacity>
+                    </View>
 
+                  </View>
+                ))
+              )}
+            </View>
 
-          <TouchableOpacity style={styles.homeButton} onPress={() => setShowCodeModal(true)}>
-            <Text style={styles.buttonText}>Show Class Code</Text>
-          </TouchableOpacity>
+            {withinAttendanceWindow && classData.latest_qr_id && <AttendanceQRCode classId={id} />}
 
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={() => router.push({
-              pathname: `/classDetails/[classID]/settings`,
-              params: { classID: id as string }
-            })}>
-            <Text style={styles.buttonText}>⚙️</Text>
-          </TouchableOpacity>
+            {Platform.OS === 'web' && classData.latest_qr_id && withinAttendanceWindow && (
+              <PrintQRCode classId={id as string} sessionToken={sessionToken} />
+            )}
 
-          <ClassCodeModal
-            visible={showCodeModal}
-            classCode={classData.class_id}
-            onClose={() => setShowCodeModal(false)}
-          />
-        </>
-      ) : (
-        <>
-          <Text style={styles.sectionTitle}>Student Options:</Text>
+            <View>
+              <TouchableOpacity style={styles.addClassButton} onPress={() => router.push(`/classDetails/${id}/pastSession`)}>
+                <Text style={styles.buttonText}>📅 View Past Sessions</Text>
+              </TouchableOpacity>
+            </View>
 
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.push(`/classDetails/${id}/scanAttendance`)}
-          >
-            <Text style={styles.buttonText}>📷 Scan Attendance</Text>
-          </TouchableOpacity>
+            <View>
+              <TouchableOpacity style={styles.addClassButton} onPress={() => setShowCodeModal(true)}>
+                <Text style={styles.buttonText}>Show Class Code</Text>
+              </TouchableOpacity>
+            </View>
 
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={async () => {
-              const user_id = await AsyncStorage.getItem('user_id');
-              router.push({
-                pathname: `/classDetails/[classID]/attendanceHistory`,
-                params: {
-                  classID: id as string,
-                  studentID: user_id!,
-                },
-              });
-            }}>
-            <Text style={styles.buttonText}>📊 View Attendance History</Text>
-          </TouchableOpacity>
-        </>
-      )}
-    </View>
+            <ClassCodeModal
+              visible={showCodeModal}
+              classCode={classData.class_id}
+              onClose={() => setShowCodeModal(false)}
+            />
+          </>
+        ) : (
+          <>
+            <Text style={styles.sectionTitle}>Student Options:</Text>
+
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => router.push(`/classDetails/${id}/scanAttendance`)}
+            >
+              <Text style={styles.buttonText}>📷 Scan Attendance</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={async () => {
+                const user_id = await AsyncStorage.getItem('user_id');
+                router.push({
+                  pathname: `/classDetails/[classID]/attendanceHistory`,
+                  params: {
+                    classID: id as string,
+                    studentID: user_id!,
+                  },
+                });
+              }}>
+              <Text style={styles.buttonText}>📊 View Attendance History</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    </ScrollView>
   );
 }

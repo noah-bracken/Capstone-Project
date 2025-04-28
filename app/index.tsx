@@ -11,8 +11,8 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
 import { useClassContext } from '../context/ClassContext';
-import { getToken } from '../hooks/auth';
-import { fetchUserAcceptanceStatus, acceptTerms } from '../hooks/api';
+import { Platform } from 'react-native';
+import { acceptTerms } from '../hooks/api';
 import styles from '../components/capstone/styles';
 import JoinModal from '../components/capstone/joinClass';
 import AnimatedClassCard from '../components/capstone/AnimatedButton';
@@ -102,6 +102,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.homeWrapper}>
       <View style={styles.headerContainer}>
         <Image source={require('../assets/images/logo.png')} style={styles.logo} />
         <Text style={styles.sectionTitle}>Welcome back, {firstName || 'User'}!</Text>
@@ -114,9 +115,17 @@ export default function HomeScreen() {
         <Text style={styles.buttonText}>⚙️</Text>
       </TouchableOpacity>
 
-      <Text style={styles.sectionTitle}>Your Classes</Text>
+      {role === 'teacher' && (
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => router.push('/addClass')}
+        >
+          <Text style={styles.buttonText}>+</Text>
+        </TouchableOpacity>
+      )}
 
-      <ScrollView contentContainerStyle={styles.classCardContainer}>
+      <ScrollView contentContainerStyle={[styles.classCardContainer, { paddingBottom: 120 }]}>
+
         {classes.length > 0 ? (
           classes.map((cls) => (
             <AnimatedClassCard key={cls.class_id} cls={cls} />
@@ -124,32 +133,25 @@ export default function HomeScreen() {
         ) : (
           <Text>No classes available</Text>
         )}
+        {role !== 'teacher' && (
+          <>
+            <TouchableOpacity
+              style={Platform.OS === 'web' ? styles.addButton : styles.homeButton}
+              onPress={() => setShowJoinModal(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.buttonText}>
+                {Platform.OS === 'web' ? '+' : '+ Join Class'}
+              </Text>
+            </TouchableOpacity>
+
+            <JoinModal
+              visible={showJoinModal}
+              onCancel={() => setShowJoinModal(false)}
+            />
+          </>
+        )}
       </ScrollView>
-
-      {role === 'teacher' ? (
-        <TouchableOpacity
-          style={styles.addClassButton}
-          onPress={() => router.push('/addClass')}
-        >
-          <Text style={styles.addClassText}>+ Add Class</Text>
-        </TouchableOpacity>
-      ) : (
-        <>
-          <TouchableOpacity
-            style={styles.homeButton}
-            onPress={() => setShowJoinModal(true)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>+ Join Class</Text>
-          </TouchableOpacity>
-
-          <JoinModal
-            visible={showJoinModal}
-            onCancel={() => setShowJoinModal(false)}
-          />
-        </>
-      )}
-
       {reminder && (
         <ReminderBanner
           className={reminder.className}
@@ -157,8 +159,10 @@ export default function HomeScreen() {
             goToAction();
             clearReminder();
           }}
+          onDismiss={clearReminder} 
         />
       )}
+
 
       <TermsModal
         visible={showTermsModal}
@@ -178,6 +182,7 @@ export default function HomeScreen() {
           router.replace('/login');
         }}
       />
+      </View>
     </View>
   );
 }

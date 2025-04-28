@@ -49,8 +49,8 @@ export default function AttendanceGauge({ percentage, label }: Props) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginHorizontal: 4,
-    marginVertical: 8,   // optional: keep a bit of vertical spacing
+    marginHorizontal: -25,
+    marginVertical: 4,
   },
   percentText: {
     position: 'absolute',

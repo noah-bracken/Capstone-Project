@@ -5,7 +5,7 @@ import styles from '../components/capstone/styles';
 import { createClass } from '../hooks/api';
 import { useClassContext } from '../context/ClassContext';
 import TimePickerModal from '../components/capstone/TimePickerModal';
-
+import { Ionicons } from '@expo/vector-icons';
 // Cross-platform alert
 const showAlert = (title: string, message: string) => {
   if (Platform.OS === 'web') {
@@ -125,58 +125,74 @@ export default function AddClassScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <TouchableOpacity style={styles.homeButton} onPress={() => router.push('/')}>
-        <Text style={styles.buttonText}>↩ Home Page</Text>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+        <Ionicons name="arrow-back" size={24} color="#1E3A8A" />
+        <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
-
-      <Text style={styles.title}>Add New Class</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Class Name"
-        value={className}
-        onChangeText={setClassName}
-      />
-
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="Description"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-        numberOfLines={4}
-      />
-
-      <Text style={styles.sectionTitle}>Meeting Times</Text>
-
-      {meetingTimes.length > 0 && (
-        <View style={{ marginBottom: 12 }}>
-          {meetingTimes.map((time, index) => (
-            <View key={index} style={styles.timeRow}>
-              <Text style={[styles.text, { flex: 1 }]}>
-                {(() => {
-                  const hour = parseInt(time.hour);
-                  const ampm = hour >= 12 ? 'PM' : 'AM';
-                  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-                  return `${time.day} - ${displayHour}:${time.minute} ${ampm}`;
-                })()}
-              </Text>
-              <TouchableOpacity onPress={() => removeMeetingTime(index)}>
-                <Text style={styles.buttonText}>🗑</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
+  
+      <View style={styles.responsiveWrapper}>
+  
+        {/* Section: Title */}
+        <View style={{ marginBottom: 24 }}>
+          <Text style={[styles.title, { marginBottom: 16 }]}>Add New Class</Text>
         </View>
-      )}
-
-      <TouchableOpacity style={styles.addClassButton} onPress={() => setShowModal(true)}>
-        <Text style={styles.buttonText}>+ Add Meeting Time</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.addClassButton} onPress={handleCreateClass}>
-        <Text style={styles.addClassText}>Create Class</Text>
-      </TouchableOpacity>
-
+  
+        {/* Section: Class Name + Description */}
+        <View style={{ marginBottom: 24 }}>
+          <TextInput
+            style={styles.input}
+            placeholder="Class Name"
+            value={className}
+            onChangeText={setClassName}
+          />
+  
+          <TextInput
+            style={[styles.input, styles.textArea, { marginTop: 12 }]}
+            placeholder="Description"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={4}
+          />
+        </View>
+  
+        {/* Section: Meeting Times */}
+        <View style={{ marginBottom: 24 }}>
+          <Text style={styles.sectionTitle}>Meeting Times</Text>
+  
+          {meetingTimes.length > 0 && (
+            <View style={{ marginTop: 12 }}>
+              {meetingTimes.map((time, index) => (
+                <View key={index} style={styles.timeRow}>
+                  <Text style={[styles.text, { flex: 1 }]}>
+                    {(() => {
+                      const hour = parseInt(time.hour);
+                      const ampm = hour >= 12 ? 'PM' : 'AM';
+                      const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+                      return `${time.day} - ${displayHour}:${time.minute} ${ampm}`;
+                    })()}
+                  </Text>
+                  <TouchableOpacity onPress={() => removeMeetingTime(index)}>
+                    <Ionicons name="trash-outline" size={20} color="#DC2626" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+  
+        {/* Section: Actions */}
+        <View style={{ marginBottom: 40 }}>
+          <TouchableOpacity style={styles.addClassButton} onPress={() => setShowModal(true)}>
+            <Text style={styles.buttonText}>+ Add Meeting Time</Text>
+          </TouchableOpacity>
+    
+          <TouchableOpacity style={styles.addClassButton} onPress={handleCreateClass}>
+            <Text style={styles.buttonText}>Create Class</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+  
       <TimePickerModal
         visible={showModal}
         onCancel={() => setShowModal(false)}
@@ -187,4 +203,4 @@ export default function AddClassScreen() {
       />
     </ScrollView>
   );
-}
+}  

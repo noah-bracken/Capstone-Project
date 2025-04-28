@@ -1,5 +1,8 @@
-import { Platform } from 'react-native';
 import { StyleSheet } from 'react-native';
+import { Platform, Dimensions } from 'react-native';
+
+const screenHeight = Dimensions.get('window').height;
+const webMarginTop = screenHeight * 0.05;
 
 const crossPlatformShadow = Platform.select({
   ios: {
@@ -62,6 +65,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#9333EA',
     padding: 14,
     borderRadius: 10,
+    width: '100%',
     alignItems: 'center',
     ...crossPlatformShadow,
     marginTop: 8,
@@ -79,6 +83,27 @@ const styles = StyleSheet.create({
     zIndex: 10,
     ...crossPlatformShadow,
   },
+  addButton: {
+    position: 'absolute',
+    top: 80,
+    right: 20,
+    backgroundColor: '#A855F7',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    ...crossPlatformShadow,
+  },
+  homeWrapper: {
+    width: '100%',
+    ...(Platform.OS === 'web' && {
+      width: '90%',
+      marginTop: webMarginTop,
+      alignSelf: 'center',
+    }),
+  },
   homeButton: {
     backgroundColor: '#4C1D95',
     padding: 12,
@@ -86,6 +111,27 @@ const styles = StyleSheet.create({
     marginTop: 10,
     alignItems: 'center',
   },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignSelf: 'flex-start',
+  },
+  backText: {
+    marginLeft: 6,
+    fontSize: 16,
+    color: '#4C1D95',
+    fontWeight: '500',
+  },
+  responsiveWrapper: {
+    width: '100%',
+    alignSelf: 'center',
+    ...(Platform.OS === 'web' && {
+      maxWidth: '60%',
+    }),
+  },
+  
   toggleButton: {
     backgroundColor: '#9333EA',
     padding: 12,
@@ -202,12 +248,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#1E293B',
   },
+  centeredResponsiveContainer: {
+    width: Platform.OS === 'web' ? '30%' : '90%',
+    alignSelf: 'center',
+    marginTop:
+      Platform.OS === 'web'
+        ? Dimensions.get('window').height * 0.15
+        : Dimensions.get('window').height * 0.05,
+  },
   deleteButton: {
     backgroundColor: '#F43F5E',
-    padding: 12,
-    marginTop: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     borderRadius: 8,
-    alignItems: 'center',
+    marginTop: 12,
+    alignSelf: 'center',
+    width: '90%',
+    maxWidth: 300,
   },
   modalOverlay: {
     flex: 1,
@@ -283,10 +340,13 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: '#EF4444',
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     borderRadius: 8,
-    alignItems: 'center',
     marginTop: 20,
+    alignSelf: 'center',
+    width: '90%',
+    maxWidth: 300,
   },
   joinClassContainer: {
     flexDirection: 'row',
@@ -363,6 +423,52 @@ const styles = StyleSheet.create({
     padding: 12,
     marginVertical: 6,
     borderRadius: 12,
+  },
+  creditsBox: {
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+  },
+  creditText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 6,
+  },
+  sectionTitle1: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  termsLink: {
+    color: '#2563EB',
+    marginTop: 10,
+    fontSize: 14,
+    textDecorationLine: 'underline',
+    textAlign: 'center',
+  },
+  creditsContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  aboutContainer: {
+    marginTop: 30,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  
+  aboutText: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  
+  creditTextCenter: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 6,
   },
   
   studentName: {

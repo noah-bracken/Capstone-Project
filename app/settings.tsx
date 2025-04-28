@@ -9,23 +9,23 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import styles from '../components/capstone/styles';
 import { useAuth } from '../hooks/useAuth';
 import { deleteAccount, deleteDeviceId } from './../hooks/api';
 import * as SecureStore from 'expo-secure-store';
-import * as Device from 'expo-device';
+import TermsModal from '../components/capstone/TermsModal'
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { logout } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
-
+  const [termsVisible, setTermsVisible] = useState(false);
   const handleDeleteAccount = async () => {
     try {
       let deviceId: string | null = null;
   
-      // Only try to access SecureStore if on a mobile platform
       if (Platform.OS !== 'web') {
         deviceId = await SecureStore.getItemAsync('device_id');
       }
@@ -58,9 +58,49 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
 
-      <TouchableOpacity style={styles.homeButton} onPress={() => router.push('/')}>
-        <Text style={styles.buttonText}>↩ Home Page</Text>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={24} color="#1E3A8A" />
+        <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
+
+      <View style={styles.aboutContainer}>
+        <Text style={styles.sectionTitle1}>About NOMark</Text>
+        <Text style={styles.aboutText}>
+          NOMark is a cross-platform attendance management system designed to make classroom check-ins seamless, fast, and secure.
+        </Text>
+        <Text style={styles.aboutText}>
+          Built with students and teachers in mind, it uses QR codes and real-time tracking to streamline the process while maintaining accountability.
+        </Text>
+      </View>
+
+      <View style={styles.creditsContainer}>
+        <Text style={styles.sectionTitle1}>Credits</Text>
+        <Text style={styles.creditTextCenter}>
+          NOMark was developed by Noah, Owen, and Michael as part of a capstone project.
+        </Text>
+        <Text style={styles.creditTextCenter}>
+          Built using React Native, Expo, Node.js, Blood, Sweat, and Tears.
+        </Text>
+      </View>
+
+      <Text
+        style={styles.termsLink}
+        onPress={() => setTermsVisible(true)}
+      >
+        📄 View Terms and Conditions
+      </Text>
+
+      <TermsModal
+        visible={termsVisible}
+        onAccept={() => {
+          setTermsVisible(false);
+          Alert.alert('Accepted', 'Thank you for accepting the Terms and Conditions.');
+        }}
+        onDecline={() => {
+          setTermsVisible(false);
+          Alert.alert('Declined', 'You declined the Terms and Conditions.');
+        }}
+      />
 
       <TouchableOpacity style={styles.logoutButton} onPress={logout}>
         <Text style={styles.buttonText}>Log Out</Text>

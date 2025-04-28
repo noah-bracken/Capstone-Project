@@ -57,7 +57,7 @@ export default function AttendanceQRCode({ classId }: AttendanceQRCodeProps) {
         <Pressable
           style={{
             flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.8)',
+            backgroundColor: 'rgba(0,0,0,1)',
             justifyContent: 'center',
             alignItems: 'center',
           }}
@@ -69,10 +69,12 @@ export default function AttendanceQRCode({ classId }: AttendanceQRCodeProps) {
               padding: 20,
               borderRadius: 16,
               alignItems: 'center',
+              borderWidth: 1,
+              borderColor: '#888',
             }}
           >
             {qrCodeValue && <QRCode value={qrCodeValue} size={400} />}
-            <Text style={{ marginTop: 10, color: '#64748B' }}>(Tap anywhere to close)</Text>
+            <Text style={{ marginTop: 10, color: '#64748B' }}>(Click anywhere to close)</Text>
           </View>
         </Pressable>
       </Modal>

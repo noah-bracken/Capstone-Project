@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -18,11 +19,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 const API_URL = 'https://capstone-db-lb2e.onrender.com';
 
 type SessionInfo = {
-        qr_id: number;
-        generated_at: string;
-        class_id: string;
-        class_name: string;
-      };
+  qr_id: number;
+  generated_at: string;
+  class_id: string;
+  class_name: string;
+};
 
 type AttendanceEntry = {
 attendance_id: number;
@@ -34,7 +35,8 @@ timestamp?: string;
 };
       
 export default function PastSessionViewer() {
-  const { classID: class_id } = useLocalSearchParams();
+  const { classID } = useLocalSearchParams();
+  const class_id = typeof classID === 'string' ? classID : Array.isArray(classID) ? classID[0] : '';
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
@@ -43,55 +45,49 @@ export default function PastSessionViewer() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [className, setClassName] = useState<string>('');
+  type ExtendedSessionInfo = SessionInfo & { generated_local: Date };
+  const [allSessions, setAllSessions] = useState<ExtendedSessionInfo[]>([]);
+  const [dateSelected, setDateSelected] = useState(false);
 
   useEffect(() => {
-    const tryFetch = async () => {
+    const fetchSessions = async () => {
       const token = await AsyncStorage.getItem('token');
       if (!token || !class_id) return;
-      fetchSessionsForDate(class_id as string, token);
-    };
-
-    tryFetch();
-  }, [date]);
-
-  const fetchSessionsForDate = async (class_id: string, token: string) => {
-    console.log('Class ID from params:', class_id);
-    setSelectedSession(null);
-    setAttendance([]);
-    setLoading(true);
   
-    try {
-      const res = await fetch(`${API_URL}/classes/${class_id}/sessions`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      try {
+        const res = await fetch(`${API_URL}/classes/${class_id}/sessions`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+  
+        const classRes = await fetch(`${API_URL}/classes/${class_id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+  
+        const classData = await classRes.json();
+        setClassName(classData.class_name);
+  
+        const sessionArray = await res.json();
+        const adjustedSessions = sessionArray.map((s: SessionInfo) => ({
+          ...s,
+          class_name: classData.class_name,
+          generated_local: new Date(new Date(s.generated_at).getTime() + 4 * 60 * 60 * 1000),
+        }));
+  
+        setAllSessions(adjustedSessions);
+        setSessions(adjustedSessions.slice(0, 10));
+      } catch (err) {
+        console.error('Error fetching sessions:', err);
+      }
+    };
+  
+    fetchSessions();
+  }, [class_id]);
 
-      const classRes = await fetch(`${API_URL}/classes/${class_id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const classData = await classRes.json();
-      setClassName(classData.class_name);
-      
-      const result = await res.json();
-      const sessionArray = Array.isArray(result) ? result : result.sessions || [];
-      console.log('Full sessions returned:', sessionArray);
-      const selectedDate = new Date(date);
-      console.log('Selected date (local):', selectedDate.toDateString());
-      const filtered = sessionArray.filter((s: SessionInfo) => {
-        const generatedDate = new Date(new Date(s.generated_at).getTime() + 4 * 60 * 60 * 1000);
-        return generatedDate.toDateString() === selectedDate.toDateString();
-      });      
-
-      sessionArray.forEach((s: SessionInfo) => {
-        const adjustedDate = new Date(new Date(s.generated_at).getTime() + 4 * 60 * 60 * 1000);
-        console.log('Session date:', adjustedDate.toDateString(), 'Generated at:', s.generated_at);
-      });
-      
-      setSessions(filtered.map((s: SessionInfo) => ({ ...s, class_id, class_name: classData.class_name })));
-    } catch (err) {
-      console.error('Error fetching class sessions:', err);
-    } finally {
-      setLoading(false);
-    }
+  const fetchSessionsForDate = (selectedDate: Date) => {
+    const filtered = allSessions.filter((s: ExtendedSessionInfo) =>
+      s.generated_local.toDateString() === selectedDate.toDateString()
+    );
+    setSessions(filtered);
   };  
   
   const loadAttendance = async (session: SessionInfo) => {
@@ -150,43 +146,25 @@ export default function PastSessionViewer() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.push({
+        pathname: '/(tabs)/classDetails/[id]',
+        params: { id: class_id },
+      })}>
+        <Ionicons name="arrow-back" size={24} color="#1E3A8A" />
+        <Text style={styles.backText}>Back</Text>
+      </TouchableOpacity>
+      <View style={styles.responsiveWrapper}>
       <Text style={styles.title}>Past Sessions for {className}</Text>
-      <TouchableOpacity style={styles.homeButton} onPress={() => router.back()}>
-        <Text style={styles.buttonText}>↩ Back</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.dateButton}>
-        <Text style={styles.buttonText}>📅 Select Date: {date.toDateString()}</Text>
-      </TouchableOpacity>
 
-      {showPicker && (
-      Platform.OS === 'web' ? (
-          <DatePicker
-          selected={date}
-          onChange={(selected) => {
-              setDate(selected as Date);
-              setShowPicker(false);
-          }}
-          inline
-          />
-      ) : (
-          <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={(e, selected) => {
-              setShowPicker(Platform.OS === 'ios');
-              if (selected) {
-                  setDate(selected);
-              }
-          }}
-          />
-      )
-      )}
+      
 
       {loading && <ActivityIndicator size="large" color="#1E3A8A" />}
 
       {!loading && sessions.length > 0 && (
       <View>
+          {!dateSelected && (
+            <Text style={styles.subtitle}>Recent Attendance</Text>
+          )}
           <Text style={styles.subtitle}>Select a session:</Text>
           {sessions.map((s) => (
           <TouchableOpacity
@@ -242,6 +220,64 @@ export default function PastSessionViewer() {
           ))}
         </View>
       )}
+      <View style={{ alignItems: 'center', marginVertical: 12 }}>
+        <TouchableOpacity onPress={() => setShowPicker((prev) => !prev)}>
+          <Text style={{ color: '#7C3AED', fontSize: 16, fontWeight: '500' }}>
+            📅 Select Date: {date.toDateString()}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {showPicker && (
+        <View style={{ alignItems: 'center', marginVertical: 10 }}>
+          {Platform.OS === 'web' ? (
+            <View style={{ maxWidth: 320 }}>
+              <DatePicker
+                selected={date}
+                onChange={(selectedDate: Date | null) => {
+                  if (selectedDate) {
+                    setDate(selectedDate);
+                    setDateSelected(true);
+                    fetchSessionsForDate(selectedDate);
+                  }
+                  setShowPicker(false);
+                }}
+                inline
+              />
+            </View>
+          ) : (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display="default"
+              onChange={(e, selected) => {
+                setShowPicker(Platform.OS === 'ios');
+                if (selected) {
+                  setDate(selected);
+                  setDateSelected(true);
+                  fetchSessionsForDate(selected);
+                }
+              }}
+            />
+          )}
+        </View>
+      )}
+      {dateSelected && (
+        <View style={{ alignItems: 'center', marginVertical: 12 }}>
+          <TouchableOpacity
+            onPress={() => {
+              setSessions(allSessions.slice(0, 10));
+              setSelectedSession(null);
+              setDateSelected(false);
+            }}
+          >
+            <Text style={{ color: '#7C3AED', fontSize: 16, fontWeight: '500' }}>
+              🔄 Show Recent Sessions
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      </View>
     </ScrollView>
   );
 }
@@ -303,11 +339,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1E3A8A',
   },
-  homeButton: {
-    backgroundColor: '#4C1D95',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10,
+  backButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignSelf: 'flex-start',
+  },
+  backText: {
+    marginLeft: 6,
+    fontSize: 16,
+    color: '#4C1D95',
+    fontWeight: '500',
+  },
+  responsiveWrapper: {
+    width: '100%',
+    alignSelf: 'center',
+    ...(Platform.OS === 'web' && {
+      maxWidth: '60%',
+    }),
   },
 });

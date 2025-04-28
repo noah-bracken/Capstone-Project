@@ -27,6 +27,7 @@ type SessionData = {
 
 export default function StudentDetails() {
   const { classID, studentID } = useLocalSearchParams();
+  const class_id = typeof classID === 'string' ? classID : Array.isArray(classID) ? classID[0] : '';
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<SessionData[]>([]);
@@ -34,6 +35,20 @@ export default function StudentDetails() {
   const [showPicker, setShowPicker] = useState(false);
   const [loadingSessions, setLoadingSessions] = useState(false);
   const router = useRouter();
+  const [dateSelected, setDateSelected] = useState(false);
+
+  const fetchRecentAttendance = async () => {
+    const token = await AsyncStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_URL}/students/${studentID}/attendance/recent?class_id=${classID}&limit=10`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setSessions(data);
+    } catch (err) {
+      console.error('Error fetching recent attendance:', err);
+    }
+  };  
 
   useEffect(() => {
     const fetchStudent = async () => {
@@ -50,25 +65,13 @@ export default function StudentDetails() {
         setLoading(false);
       }
     };
-
-    const fetchRecentAttendance = async () => {
-      const token = await AsyncStorage.getItem('token');
-      try {
-        const res = await fetch(`${API_URL}/students/${studentID}/attendance/recent?class_id=${classID}&limit=10`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        setSessions(data);
-      } catch (err) {
-        console.error('Error fetching recent attendance:', err);
-      }
-    };
-
+  
     if (studentID) {
       fetchStudent();
       fetchRecentAttendance();
     }
   }, [studentID]);
+  
 
   const fetchAttendanceByDate = async (date: Date) => {
     const token = await AsyncStorage.getItem('token');
@@ -105,46 +108,26 @@ export default function StudentDetails() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>NOMark</Text>
-      <TouchableOpacity style={styles.homeButton} onPress={() => router.back()}>
-        <Text style={styles.buttonText}>↩ Back</Text>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() =>
+          router.push({
+            pathname: '/(tabs)/classDetails/[id]',
+            params: { id: class_id },
+          })
+        }
+      >
+        <Text style={styles.backText}>↩ Back</Text>
       </TouchableOpacity>
-
+      <View style={styles.responsiveWrapper}>
       <Text style={styles.title}>Student Details</Text>
       <Text style={styles.text}>Name: {student.first_name} {student.last_name}</Text>
       <Text style={styles.text}>Email: {student.email}</Text>
 
-      <Text style={styles.subtitle}>Recent Attendance (Last 10 Sessions)</Text>
+      
 
-      <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.dateButton}>
-        <Text style={styles.buttonText}>📅 Select Date: {selectedDate.toDateString()}</Text>
-      </TouchableOpacity>
-
-      {showPicker && (
-        Platform.OS === 'web' ? (
-          <DatePicker
-            selected={selectedDate}
-            onChange={(date) => {
-              setSelectedDate(date as Date);
-              setShowPicker(false);
-              fetchAttendanceByDate(date as Date);
-            }}
-            inline
-          />
-        ) : (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            display="default"
-            onChange={(e, date) => {
-              setShowPicker(false);
-              if (date) {
-                setSelectedDate(date);
-                fetchAttendanceByDate(date);
-              }
-            }}
-          />
-        )
+      {!dateSelected && (
+        <Text style={styles.subtitle}>Recent Attendance</Text>
       )}
 
       {loadingSessions && <ActivityIndicator size="small" color="#1E3A8A" />}
@@ -178,11 +161,72 @@ export default function StudentDetails() {
           <Text>Status: {session.status.toUpperCase()}</Text>
         </View>
       ))}
+      <View style={{ alignItems: 'center', marginVertical: 12 }}>
+        <TouchableOpacity onPress={() => setShowPicker((prev) => !prev)}>
+          <Text style={{ color: '#7C3AED', fontSize: 16, fontWeight: '500' }}>
+            📅 Select Date: {selectedDate.toDateString()}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      {showPicker && (
+        <View style={{ alignItems: 'center', marginVertical: 10 }}>
+          {Platform.OS === 'web' ? (
+            <View style={{ maxWidth: 320 }}>
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date) => {
+                  setDateSelected(true);
+                  setSelectedDate(date as Date);
+                  setShowPicker(false);
+                  fetchAttendanceByDate(date as Date);
+                }}
+                inline
+              />
+            </View>
+          ) : (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="default"
+              onChange={(e, date) => {
+                setShowPicker(false);
+                if (date) {
+                  setDateSelected(true);
+                  setSelectedDate(date);
+                  fetchAttendanceByDate(date);
+                }
+              }}
+            />
+          )}
+        </View>
+      )}
+      {dateSelected && (
+        <View style={{ alignItems: 'center', marginVertical: 12 }}>
+        <TouchableOpacity
+          onPress={() => {
+            setDateSelected(false);
+            fetchRecentAttendance();
+          }}
+        >
+          <Text style={{ color: '#7C3AED', fontSize: 16, fontWeight: '500' }}>
+            🔄 Show Recent Attendance
+          </Text>
+        </TouchableOpacity>
+      </View>      
+      )}
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  responsiveWrapper: {
+    width: '100%',
+    alignSelf: 'center',
+    ...(Platform.OS === 'web' && {
+      maxWidth: '60%',
+    }),
+  },
   container: {
     padding: 20,
     paddingBottom: 60,
@@ -251,4 +295,18 @@ const styles = StyleSheet.create({
     color: '#334155',
     padding: 8,
   },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignSelf: 'flex-start',
+  },
+  backText: {
+    marginLeft: 6,
+    fontSize: 16,
+    color: '#4C1D95',
+    fontWeight: '500',
+  },
+  
 });

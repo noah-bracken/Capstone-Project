@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { Ionicons } from '@expo/vector-icons';
 
 const API_URL = 'https://capstone-db-lb2e.onrender.com';
 
@@ -32,7 +33,25 @@ export default function AttendanceHistory() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [dateSelected, setDateSelected] = useState(false);
   const router = useRouter();
+  const [studentAttendanceRate, setStudentAttendanceRate] = useState<number | null>(null);
+
+  
+
+  const fetchRecentAttendance = async () => {
+    const token = await AsyncStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_URL}/students/${studentID}/attendance/recent?class_id=${classID}&limit=10`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) setSessions(data);
+      else setSessions([]);
+    } catch (err) {
+      console.error('Error fetching recent attendance:', err);
+    }
+  };
 
   useEffect(() => {
     const fetchStudent = async () => {
@@ -50,25 +69,12 @@ export default function AttendanceHistory() {
       }
     };
 
-    const fetchRecentAttendance = async () => {
-      const token = await AsyncStorage.getItem('token');
-      try {
-        const res = await fetch(`${API_URL}/students/${studentID}/attendance/recent?class_id=${classID}&limit=10`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (Array.isArray(data)) setSessions(data);
-        else setSessions([]);
-      } catch (err) {
-        console.error('Error fetching recent attendance:', err);
-      }
-    };
-
     if (studentID) {
       fetchStudent();
       fetchRecentAttendance();
     }
   }, [studentID]);
+
 
   const fetchAttendanceByDate = async (date: Date) => {
     const token = await AsyncStorage.getItem('token');
@@ -108,42 +114,13 @@ export default function AttendanceHistory() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Attendance History</Text>
-      <TouchableOpacity style={styles.homeButton} onPress={() => router.back()}>
-        <Text style={styles.buttonText}>↩ Back</Text>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={24} color="#1E3A8A" />
+        <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
 
-      <Text style={styles.subtitle}>Recent Attendance (Last 10 Sessions)</Text>
 
-      <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.dateButton}>
-        <Text style={styles.buttonText}>📅 Select Date: {selectedDate.toDateString()}</Text>
-      </TouchableOpacity>
-
-      {showPicker && (
-        Platform.OS === 'web' ? (
-          <DatePicker
-            selected={selectedDate}
-            onChange={(date) => {
-              setSelectedDate(date as Date);
-              setShowPicker(false);
-              fetchAttendanceByDate(date as Date);
-            }}
-            inline
-          />
-        ) : (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            display="default"
-            onChange={(e, date) => {
-              setShowPicker(false);
-              if (date) {
-                setSelectedDate(date);
-                fetchAttendanceByDate(date);
-              }
-            }}
-          />
-        )
-      )}
+      {!dateSelected && <Text style={styles.subtitle}>Recent Attendance</Text>}
 
       {loadingSessions && <ActivityIndicator size="small" color="#1E3A8A" />}
 
@@ -176,6 +153,52 @@ export default function AttendanceHistory() {
           <Text>Status: {session.status.toUpperCase()}</Text>
         </View>
       ))}
+      <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.dateButton}>
+        <Text style={styles.buttonText}>📅 Select Date: {selectedDate.toDateString()}</Text>
+      </TouchableOpacity>
+
+      {showPicker && (
+        Platform.OS === 'web' ? (
+          <DatePicker
+            selected={selectedDate}
+            onChange={(date) => {
+              setDateSelected(true);
+              setSelectedDate(date as Date);
+              setShowPicker(false);
+              fetchAttendanceByDate(date as Date);
+            }}            
+            inline
+          />
+        ) : (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            display="default"
+            onChange={(e, date) => {
+              setShowPicker(false);
+              if (date) {
+                setDateSelected(true);
+                setSelectedDate(date);
+                setShowPicker(false);
+                fetchAttendanceByDate(date);
+              }
+            }}
+          />
+        )
+      )}
+
+      {dateSelected && (
+        <TouchableOpacity
+          onPress={() => {
+            setDateSelected(false);
+            fetchRecentAttendance();
+          }}
+          style={styles.dateButton}
+        >
+          <Text style={styles.buttonText}>🔄 Show Recent Attendance</Text>
+        </TouchableOpacity>
+      )}
+
     </ScrollView>
   );
 }
@@ -225,4 +248,18 @@ const styles = StyleSheet.create({
     color: '#334155',
     padding: 8,
   },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignSelf: 'flex-start',
+  },
+  backText: {
+    marginLeft: 6,
+    fontSize: 16,
+    color: '#1E3A8A',
+    fontWeight: '500',
+  }
+  
 });

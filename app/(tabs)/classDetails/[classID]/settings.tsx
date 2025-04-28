@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import styles from '../../../../components/capstone/styles';
@@ -16,6 +17,7 @@ import { fetchClassSettings, updateClass, deleteClass } from '../../../../hooks/
 import ConfirmModal from '../../../../components/capstone/confirm';
 import { ClassType } from '../../../../components/capstone/types'
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ClassSettingsScreen() {
   const router = useRouter();
@@ -34,6 +36,14 @@ export default function ClassSettingsScreen() {
     preload ? JSON.parse(preload) : null
   );
   
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${title}\n\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };  
+
   useEffect(() => {
     if (classData) {
       setClassName(classData.class_name || '');
@@ -105,7 +115,7 @@ export default function ClassSettingsScreen() {
     const formattedMinute = minute.toString().padStart(2, '0');
   
     if (meetingTimes.length >= 5) {
-      Alert.alert('Limit Reached', 'You can only add up to 5 meeting times.');
+      showAlert('Limit Reached', 'You can only add up to 5 meeting times.');
       return;
     }
   
@@ -114,12 +124,12 @@ export default function ClassSettingsScreen() {
     );
   
     if (duplicate) {
-      Alert.alert('Duplicate', 'This meeting time already exists.');
+      showAlert('Duplicate', 'This meeting time already exists.');
       return;
     }
   
     if (!isAtLeastOneHourApart(day, hour, minute, meetingTimes)) {
-      Alert.alert('Too Close', 'Meeting times must be at least 1 hour apart.');
+      showAlert('Too Close', 'Meeting times must be at least 1 hour apart.');
       return;
     }
   
@@ -130,21 +140,21 @@ export default function ClassSettingsScreen() {
 
   const handleSave = async () => {
     if (!className.trim()) {
-      Alert.alert('Error', 'Class name is required.');
+      showAlert('Error', 'Class name is required.');
       return;
     }
 
     try {
       const result = await updateClass(classID as string, className, description, color, meetingTimes);
       if (result?.message) {
-        Alert.alert('Success', 'Class updated successfully.');
+        showAlert('Success', 'Class updated successfully.');
         await refreshClasses();
         router.replace(`/(tabs)/classDetails/${classID}`);
       } else {
-        Alert.alert('Error', 'Failed to update class.');
+        showAlert('Error', 'Failed to update class.');
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Something went wrong.');
+      showAlert('Error', err.message || 'Something went wrong.');
     }
   };
 
@@ -175,11 +185,17 @@ export default function ClassSettingsScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <TouchableOpacity style={styles.homeButton} onPress={() => router.back()}>
-        <Text style={styles.buttonText}>↩ Back</Text>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.push({
+        pathname: '/(tabs)/classDetails/[id]',
+        params: { id: classID },
+      })}>
+        <Ionicons name="arrow-back" size={24} color="#1E3A8A" />
+        <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
+      <View style={styles.responsiveWrapper}>
+      
 
-      <Text style={styles.title}>Class Settings</Text>
+      <Text style={[styles.title, { marginBottom: 16 }]}>Class Settings</Text>
 
       <TextInput
         style={styles.input}
@@ -189,7 +205,7 @@ export default function ClassSettingsScreen() {
       />
 
       <TextInput
-        style={[styles.input, styles.textArea]}
+        style={[styles.input, styles.textArea, { marginTop: 12 }]}
         placeholder="Description"
         value={description}
         onChangeText={setDescription}
@@ -207,12 +223,19 @@ export default function ClassSettingsScreen() {
             const displayHour = hourNum % 12 === 0 ? 12 : hourNum % 12;
 
             return (
-              <View key={index} style={styles.timeRow}>
-                <Text style={[styles.text, { flex: 1 }]}>
+              <View
+                key={index}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                <Text style={[styles.text, { flex: 0.12 }]}>
                   {`${time.day} - ${displayHour}:${minute} ${ampm}`}
                 </Text>
-                <TouchableOpacity onPress={() => removeMeetingTime(index)}>
-                  <Text style={styles.buttonText}>🗑</Text>
+                <TouchableOpacity onPress={() => removeMeetingTime(index)} style={{ marginLeft: 8 }}>
+                  <Ionicons name="trash-outline" size={20} color="#DC2626" />
                 </TouchableOpacity>
               </View>
             );
@@ -228,9 +251,14 @@ export default function ClassSettingsScreen() {
         <Text style={styles.addClassText}>Save Changes</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.deleteButton} onPress={() => setModalVisible(true)}>
+      <TouchableOpacity
+        style={[styles.deleteButton, { width: '100%', maxWidth: '100%' }]}
+        onPress={() => setModalVisible(true)}
+      >
         <Text style={styles.buttonText}>🗑 Delete Class</Text>
       </TouchableOpacity>
+
+
 
       <ConfirmModal
         visible={modalVisible}
@@ -246,6 +274,7 @@ export default function ClassSettingsScreen() {
           setShowModal(false);
         }}
       />
+      </View>
     </ScrollView>
   );
 }
